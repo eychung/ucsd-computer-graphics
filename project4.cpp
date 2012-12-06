@@ -129,6 +129,8 @@ Vector4 frustum_points[8];
 
 float interval = 0.02;
 
+bool is_fullscreen = false;
+
 // FPS
 GLvoid *font_style = GLUT_BITMAP_8_BY_13;
 void printw (float x, float y, float z, char* format, ...);
@@ -439,7 +441,7 @@ void processNormalKeys(unsigned char key, int x, int y) {
 	switch (key)
 	{
 		case 'w':
-			//cube1.getMatrix().setMatrix(cube1.getMatrix().translate(0,0,-1.0));
+			//cube1.getMatrix().setMatrix4(cube1.getMatrix().translate(0,0,-1.0));
 			terrain.getMatrix().setMatrix(terrain.getMatrix().translate(0.0,0,1.0));
 			break;
 		case 's':
@@ -478,6 +480,17 @@ void processNormalKeys(unsigned char key, int x, int y) {
 				glEnable(GL_TEXTURE_2D);
 			else
 				glDisable(GL_TEXTURE_2D);
+			break;
+		case 'f':
+			is_fullscreen = !is_fullscreen;
+			if (is_fullscreen)
+				glutFullScreen();
+			else
+				glutReshapeWindow(512, 512);
+			break;
+		case 27:
+			delete shader;
+			exit(0);
 			break;
 	}
 }
@@ -789,6 +802,8 @@ void loadTexture(UINT textureArray[], char* strFileName, int ID)
 	// Set the wrap mode (but it doesn't make a difference in this project):
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+	delete tdata;
 }
 
 //----------------------------------------------------------------------------
@@ -809,7 +824,12 @@ void window::reshapeCallback(int w, int h)
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glFrustum(-10.0, 10.0, -10.0, 10.0, 10, 1000.0); // set perspective projection viewing frustum
+
+	float height_ar = 1.0;
+	float width_ar = 1.0;
+	w < h ? width_ar = w/(float)h : height_ar = h/(float)w;
+
+	glFrustum(-10.0 * width_ar, 10.0 * width_ar, -10.0 * height_ar, 10.0 * height_ar, 5.0, 1000.0); // set perspective projection viewing frustum
 	glTranslatef(0, 0, -20);
 
 	glMatrixMode(GL_MODELVIEW);
@@ -902,6 +922,8 @@ int main(int argc, char *argv[])
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);		// open an OpenGL context with double buffering, RGB colors, and depth buffering
 	glutInitWindowSize(512, 512);									// set initial window size
 	glutCreateWindow("Final Project");								// open window and set window title
+	if (is_fullscreen)
+		glutFullScreen();
 
 	glEnable(GL_NORMALIZE);
 	glEnable(GL_DEPTH_TEST);										// enable z-buffer

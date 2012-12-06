@@ -130,6 +130,8 @@ Vector4 frustum_points[8];
 float interval = 0.02;
 
 bool is_fullscreen = false;
+TerrainHelper * terrain_helper = new TerrainHelper();
+int terrainListID;
 
 // FPS
 GLvoid *font_style = GLUT_BITMAP_8_BY_13;
@@ -489,7 +491,9 @@ void processNormalKeys(unsigned char key, int x, int y) {
 				glutReshapeWindow(512, 512);
 			break;
 		case 27:
-			delete shader;
+			//if (shader)
+			//	delete shader;
+			//glDeleteLists(terrainListID, 1);
 			exit(0);
 			break;
 	}
@@ -755,7 +759,7 @@ void Draw_Grid()
 	glDisable(GL_LIGHT0);
 	for(float i = -500; i <= 500; i += 5)
 	{
-		glBegin(GL_LINES);
+		glBegin(GL_QUADS);
 			//glColor3ub(150, 190, 150);						
 			glColor3f(1,1,1);
 			glVertex3f(-500, -150, i);					
@@ -841,11 +845,12 @@ void window::reshapeCallback(int w, int h)
 void window::displayCallback(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // clear color and depth buffers
-	
+
 	world.getMatrix().setMatrix(base.getMatrix().multiply(temp.getMatrix()));
 	camera.inverseCamera();
 	
 	// world * camera
+	// calculate skybox matrix and draw skybox
 	cube.getMatrix().identity();
 	cube2.getMatrix().identity();
 	all.getMatrix().setMatrix(cube.getMatrix());
@@ -855,8 +860,19 @@ void window::displayCallback(void)
 	all.getMatrix().setMatrix(all.getMatrix().multiply(camera.getMatrix()));
 	glLoadMatrixf(all.getMatrix().getPointer());
 	Draw_Skybox(0,0,0,500,500,500);	// Draw the Skybox
-	Draw_Grid();
+	//Draw_Grid();
+
+	//calculate terrain matrix and draw terrain
+	cube.getMatrix().identity();
+	all.getMatrix().setMatrix(cube.getMatrix());
+	all.getMatrix().setMatrix(all.getMatrix().multiply(cube2.getMatrix().translate(0,-3,0)));
+	all.getMatrix().setMatrix(all.getMatrix().multiply(terrain.getMatrix()));
+	all.getMatrix().setMatrix(all.getMatrix().multiply(world.getMatrix()));
+	all.getMatrix().setMatrix(all.getMatrix().multiply(camera.getMatrix()));
+	glLoadMatrixf(all.getMatrix().getPointer());
+	glCallList(terrainListID);
 	
+	//calculate teapot matrix and draw teapot
 	cube.getMatrix().identity();
 	all.getMatrix().setMatrix(cube.getMatrix());
 	all.getMatrix().setMatrix(all.getMatrix().multiply(world.getMatrix()));
@@ -906,7 +922,6 @@ void window::displayCallback(void)
 	glutSolidSphere(1.0,20,20);
 	glEnable(GL_LIGHT0);
 	glEnable(GL_LIGHTING);
-
 
 	drawFPS();
 
@@ -985,7 +1000,14 @@ int main(int argc, char *argv[])
 	loadTexture(SkyboxTexture,"desert_left.ppm", SKYLEFT);
 	loadTexture(SkyboxTexture,"desert_right.ppm", SKYRIGHT);
 	loadTexture(SkyboxTexture,"desert_top.ppm", SKYUP);
+
+	terrain_helper->terrainLoad(500,500,1);
+	//terrain_helper->terrainScale(-10, 30);
+	terrainListID = terrain_helper->terrainCreateDL(0,0,0);
+
 	//loadTexture(SkyboxTexture,"desert_down.ppm.jpg", SKYDOWN);
+
+	delete(terrain_helper);
 
 	glutMainLoop();
 	return 0;

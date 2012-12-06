@@ -213,6 +213,8 @@ int TerrainHelper::terrainLoad(int width, int height, int normals) {
 	int mode;
 	float pointHeight;
 
+	srand(time(0));
+
 // if a terrain already exists, destroy it.
 	if (terrainHeights != NULL)
 		terrainDestroy();
@@ -248,7 +250,8 @@ int TerrainHelper::terrainLoad(int width, int height, int normals) {
 	for (int i = 0 ; i < terrainGridLength; i++)
 		for (int j = 0;j < terrainGridWidth; j++) {
 // compute the height as a value between 0.0 and 1.0
-			pointHeight = 0.0f; // TODO: fill with height calculation logic
+			float r = (rand() % 100) / (float)100;
+			pointHeight = r; // TODO: fill with height calculation logic
 			terrainHeights[i*terrainGridWidth + j] = pointHeight;
 // TODO: fill with terrain colors
 			terrainColors[3*(i*terrainGridWidth + j)]   = 1.0f;

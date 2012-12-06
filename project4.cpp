@@ -983,7 +983,8 @@ int main(int argc, char *argv[])
 	shader = new Shader(toon_vert,toon_frag,true);
 
 	/*cout << "Loading dragon_smooth.obj" << endl;
-	objReader.readObj("dragon_smooth.obj", nVerts, &vertices, &normals, &texcoords, nIndices, &indices);*/
+	objReader.readObj("car.obj", nVerts, &vertices, &normals, &texcoords, nIndices, &indices);
+	cout << "done loading" << endl;*/
 
 	camera.lookAt(p,l,up);
 
@@ -999,7 +1000,7 @@ int main(int argc, char *argv[])
 	loadTexture(SkyboxTexture,"desert_top.ppm", SKYUP);
 
 	terrain_helper->terrainLoad(500,500,1);
-	//terrain_helper->terrainScale(-10, 30);
+	terrain_helper->terrainScale(0, 1);
 	terrainListID = terrain_helper->terrainCreateDL(0,0,0);
 
 	//loadTexture(SkyboxTexture,"desert_down.ppm.jpg", SKYDOWN);

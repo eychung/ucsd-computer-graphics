@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
+#include <time.h>
 #include "..\lib\glut-3.7.6-bin\include\GL\glut.h"
 
 #define TERRAIN_ERROR_MEMORY_PROBLEM	-3

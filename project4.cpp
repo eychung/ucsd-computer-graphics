@@ -829,12 +829,9 @@ void window::reshapeCallback(int w, int h)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	float height_ar = 1.0;
-	float width_ar = 1.0;
-	w < h ? width_ar = w/(float)h : height_ar = h/(float)w;
-
-	glFrustum(-10.0 * width_ar, 10.0 * width_ar, -10.0 * height_ar, 10.0 * height_ar, 5.0, 1000.0); // set perspective projection viewing frustum
-	glTranslatef(0, 0, -20);
+	//glFrustum(-10.0 * width_ar, 10.0 * width_ar, -10.0 * height_ar, 10.0 * height_ar, 10.0, 1000.0); // set perspective projection viewing frustum
+	gluPerspective(90.0, w/(float)h, 0, 1000);
+	glTranslatef(0, -5, -15);
 
 	glMatrixMode(GL_MODELVIEW);
 }

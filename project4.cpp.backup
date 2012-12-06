@@ -1,0 +1,276 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
+#include <E:/Downloads/lib/glut-3.7.6-bin/glut-3.7.6-bin/include/GL/glut.h>
+#include "project4.h"
+
+using namespace std;
+
+static Camera camera;
+static Cube all;			// Final matrix
+static Cube cube1;			// Object matrix
+static Cube cube2;			// Object matrix
+static Cube base;			// Initial matrix before mouse event
+static Cube temp;			// Evanescent matrix during mouse event
+static Cube world;			// Accumulation matrix for base and temp
+
+float prevX, prevY, prevZ;
+float xf, yf, zf;
+bool pressedLeft, pressedMiddle, pressedRight;
+
+float theta, axis;
+
+int Window::width  = 512;   // set window width in pixels here
+int Window::height = 512;   // set window height in pixels here
+
+Cube::Cube()
+{
+}
+
+Matrix4& Cube::getMatrix()
+{
+	return matrix;
+}
+
+
+float findZ(float x, float y)
+{
+	float z = 1 - x*x - y*y;
+
+	if (z < 0)
+	{
+		z = 0;
+	}
+	else
+	{
+		z = sqrt(z);
+	}
+	return z;
+}
+
+float getTheta(Vector3 v, Vector3 w)
+{
+	return acos(v.dot(w) / (v.magnitude() * w.magnitude()));
+}
+
+void processMouse(int button, int state, int x, int y)
+{
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+	{
+		xf = (float)x/((float)Window::width/2.0) - 1;
+		yf = 1 - (float)y/((float)Window::height/2.0);
+		pressedLeft = true;
+		prevX = xf;
+		prevY = yf;
+		prevZ = findZ(prevX,prevY);
+		base.getMatrix().setMatrix(world.getMatrix());
+	}
+	else if (button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN)
+	{
+		xf = (float)x/((float)Window::width/2.0) - 1;
+		yf = 1 - (float)y/((float)Window::height/2.0);
+		pressedMiddle = true;
+		prevX = xf;
+		prevY = yf;
+		prevZ = findZ(prevX,prevY);
+		base.getMatrix().setMatrix(world.getMatrix());
+	}
+	else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
+	{
+		xf = (float)x/((float)Window::width/2.0) - 1;
+		yf = 1 - (float)y/((float)Window::height/2.0);
+		pressedRight = true;
+		prevX = xf;
+		prevY = yf;
+		prevZ = findZ(prevX,prevY);
+		base.getMatrix().setMatrix(world.getMatrix());
+	}
+	else
+	{
+		base.getMatrix().setMatrix(world.getMatrix());
+		temp.getMatrix().identity();
+		pressedLeft = false;
+		pressedMiddle = false;
+		pressedRight = false;
+	}
+
+}
+
+void processMotion(int x, int y)
+{
+	xf = (float)x/((float)Window::width/2.0) - 1;
+	yf = 1 - (float)y/((float)Window::height/2.0);
+	if (pressedLeft)
+	{
+		zf = findZ(xf,yf);
+		Vector3 prev = Vector3(prevX,prevY,prevZ);
+		Vector3 curr = Vector3(xf,yf,zf);
+		
+		Vector3 p = prev.normalize();
+		Vector3 c = curr.normalize();
+		prev.set(p.get(0), p.get(1), p.get(2));
+		curr.set(c.get(0), c.get(1), c.get(2));
+
+		theta = getTheta(prev, curr);
+		Vector3 axis3 = prev.cross(prev, curr);
+		Vector3 a = axis3.normalize();
+		axis3.set(a.get(0), a.get(1), a.get(2));
+
+		Vector4 axis4 = Vector4(axis3.get(0), axis3.get(1), axis3.get(2), 0);
+
+		temp.getMatrix().setMatrix(*temp.getMatrix().rotateAA(axis4,theta));
+	}
+	else if (pressedMiddle)
+	{
+		temp.getMatrix().identity();
+		temp.getMatrix().setMatrix(*temp.getMatrix().translate((xf-prevX)*15,(yf-prevY)*15,0));
+	}
+	else if (pressedRight)
+	{
+		float s;
+		if (prevY < yf)
+		{
+			s = 1-(yf-prevY)*-2;
+			temp.getMatrix().identity();
+			temp.getMatrix().setMatrix(*temp.getMatrix().scale(s,s,s));
+		}
+		else
+		{
+			float s = 1+(yf-prevY)*0.5;
+			if (s < 0)
+			{
+				s = 0.0001;
+			}
+			temp.getMatrix().identity();
+			temp.getMatrix().setMatrix(*temp.getMatrix().scale(s,s,s));
+		}
+	}
+}
+
+void processNormalKeys(unsigned char key, int x, int y) {
+	Vector3 v;
+	switch (key)
+	{
+		case 'r':
+			base.getMatrix().identity();
+			temp.getMatrix().identity();
+			break;
+	}
+}
+
+//----------------------------------------------------------------------------
+// Callback method called when system is idle.
+void Window::idleCallback(void)
+{
+	displayCallback();    // call display routine to redraw cube
+}
+
+//----------------------------------------------------------------------------
+// Callback method called when window is resized.
+void Window::reshapeCallback(int w, int h)
+{
+	width = w;
+	height = h;
+	glViewport(0, 0, w, h);  // set new viewport size
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(45.0, float(w)/float(h), 1.0, 100.0);
+}
+
+//----------------------------------------------------------------------------
+// Callback method called when window readraw is necessary or
+// when glutPostRedisplay() was called.
+void Window::displayCallback(void)
+{
+	GLfloat specular[]  = {1.0, 1.0, 1.0, 1.0};
+	GLfloat shininess[] = {50.0};
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // clear color and depth buffers
+	glMatrixMode(GL_MODELVIEW);
+
+	//glLoadIdentity();
+
+	world.getMatrix().setMatrix(*base.getMatrix().multiply(temp.getMatrix()));
+	camera.inverseCamera();
+
+	glPushMatrix();
+		// Done with that, clear the modelview matrix
+		//glLoadIdentity();
+		// Generate specular material properties:
+		glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
+		glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
+		// Draw the first sphere:
+		cube1.getMatrix().identity();
+		cube1.getMatrix().setMatrix(*cube1.getMatrix().translate(-1.5,0,-2));
+		all.getMatrix().setMatrix(cube1.getMatrix());
+		all.getMatrix().setMatrix(*all.getMatrix().multiply(world.getMatrix()));
+		all.getMatrix().setMatrix(*all.getMatrix().multiply(camera.getMatrix()));
+		glLoadMatrixd(all.getMatrix().getPointer());
+		//glTranslatef(-1.5, 0, -8);
+		glutSolidSphere(1.0, 12, 12);
+	glPopMatrix();
+
+	glPushMatrix();
+		// Done with that, clear the modelview matrix
+		//glLoadIdentity();
+		// Generate specular material properties:
+		glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
+		glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
+		// Draw the second sphere:
+		cube2.getMatrix().identity();
+		cube2.getMatrix().setMatrix(*cube2.getMatrix().translate(1.5,0,-2));
+		all.getMatrix().setMatrix(cube2.getMatrix());
+		all.getMatrix().setMatrix(*all.getMatrix().multiply(world.getMatrix()));
+		all.getMatrix().setMatrix(*all.getMatrix().multiply(camera.getMatrix()));
+		glLoadMatrixd(all.getMatrix().getPointer());
+		//glTranslatef(1.5, 0, -8);
+		glutSolidSphere(1.0, 12, 12);
+	glPopMatrix();
+
+	glutSwapBuffers();
+}
+
+int main(int argc, char *argv[])
+{
+	GLfloat light0_position[] = {5.0, 5.0, 3.0, 0.0};
+	GLfloat ambient[]         = {0.2, 0.2, 0.2, 1.0};  // default ambient color for all light sources
+
+	glutInit(&argc, argv);      	      	      // initialize GLUT
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);   // open an OpenGL context with double buffering, RGB colors, and depth buffering
+	glutInitWindowSize(512, 512);         // set initial window size
+	glutCreateWindow("Two Spheres");      // open window and set window title
+
+	glEnable(GL_DEPTH_TEST);            	      // enable z-buffer
+	glClearColor(0.0, 0.0, 0.0, 0.0);   	      // set clear color to black
+
+	// Generate light source:
+	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
+	glEnable(GL_LIGHTING);                              // enables lighting; this changes the behavior of glColor
+	glEnable(GL_LIGHT0);                                // enable a light source; otherwise you will only see ambient light
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);  // set the default ambient color
+	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);  // allow glColor to set ambient and diffuse colors of geometry
+
+	// Install callback functions:
+	glutDisplayFunc(Window::displayCallback);
+	glutReshapeFunc(Window::reshapeCallback);
+	glutIdleFunc(Window::idleCallback);
+
+	glutMouseFunc(processMouse);
+	glutMotionFunc(processMotion);
+	glutKeyboardFunc(processNormalKeys);
+  
+	glEnable(GL_NORMALIZE);
+
+	// Initialize cube matrix:
+	all.getMatrix().identity();
+	cube1.getMatrix().identity();
+	cube2.getMatrix().identity();
+	base.getMatrix().identity();
+	temp.getMatrix().identity();
+	world.getMatrix().identity();
+
+
+	glutMainLoop();
+	return 0;
+}
+

@@ -1,0 +1,414 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
+#include "shader.h"
+#include <E:/Downloads/lib/glut-3.7.6-bin/glut-3.7.6-bin/include/GL/glut.h>
+#include "project4.h"
+
+using namespace std;
+
+static Camera camera;
+static Cube all;			// Final matrix
+static Cube cube1;			// Object matrix
+static Cube cube2;			// Object matrix
+static Cube light0;			// Light_0 matrix
+static Cube light1;			// Light_1 matrix
+static Cube base;			// Initial matrix before mouse event
+static Cube temp;			// Evanescent matrix during mouse event
+static Cube world;			// Accumulation matrix for base and temp
+static Cube base_light0;
+static Cube temp_light0;
+static Cube world_light0;
+static Cube base_light1;
+static Cube temp_light1;
+static Cube world_light1;
+
+bool light0Toggle = false;
+bool light1Toggle = false;
+bool lightShaderToggle = false;
+
+char light0_vert[] = "light0_shading.vert";
+char light0_frag[] = "light0_shading.frag";
+char light1_vert[] = "light1_shading.vert";
+char light1_frag[] = "light1_shading.frag";
+
+Shader * shader1;
+Shader * shader2;
+//Shader shader3;
+
+char * light0_shader;
+char * light1_shader;
+
+float prevX, prevY, prevZ;
+float xf, yf, zf;
+bool pressedLeft, pressedMiddle, pressedRight;
+
+float theta, axis;
+
+int window::width  = 512;   // set window width in pixels here
+int window::height = 512;   // set window height in pixels here
+
+Cube::Cube()
+{
+}
+
+Matrix4& Cube::getMatrix()
+{
+	return matrix;
+}
+
+
+float findZ(float x, float y)
+{
+	float z = 1 - x*x - y*y;
+
+	if (z < 0)
+	{
+		z = 0;
+	}
+	else
+	{
+		z = sqrt(z);
+	}
+	return z;
+}
+
+float getTheta(Vector3 v, Vector3 w)
+{
+	return acos(v.dot(w) / (v.magnitude() * w.magnitude()));
+}
+
+void processMouse(int button, int state, int x, int y)
+{
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+	{
+		xf = (float)x/((float)window::width/2.0) - 1;
+		yf = 1 - (float)y/((float)window::height/2.0);
+		pressedLeft = true;
+		prevX = xf;
+		prevY = yf;
+		prevZ = findZ(prevX,prevY);
+		base.getMatrix().setMatrix(world.getMatrix());
+		base_light0.getMatrix().setMatrix(world_light0.getMatrix());
+		base_light1.getMatrix().setMatrix(world_light1.getMatrix());
+	}
+	else if (button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN)
+	{
+		xf = (float)x/((float)window::width/2.0) - 1;
+		yf = 1 - (float)y/((float)window::height/2.0);
+		pressedMiddle = true;
+		prevX = xf;
+		prevY = yf;
+		prevZ = findZ(prevX,prevY);
+		base.getMatrix().setMatrix(world.getMatrix());
+		base_light0.getMatrix().setMatrix(world_light0.getMatrix());
+		base_light1.getMatrix().setMatrix(world_light1.getMatrix());
+	}
+	else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
+	{
+		xf = (float)x/((float)window::width/2.0) - 1;
+		yf = 1 - (float)y/((float)window::height/2.0);
+		pressedRight = true;
+		prevX = xf;
+		prevY = yf;
+		prevZ = findZ(prevX,prevY);
+		base.getMatrix().setMatrix(world.getMatrix());
+		base_light0.getMatrix().setMatrix(world_light0.getMatrix());
+		base_light1.getMatrix().setMatrix(world_light1.getMatrix());
+	}
+	else
+	{
+		base.getMatrix().setMatrix(world.getMatrix());
+		base_light0.getMatrix().setMatrix(world_light0.getMatrix());
+		base_light1.getMatrix().setMatrix(world_light1.getMatrix());
+		temp.getMatrix().identity();
+		temp_light0.getMatrix().identity();
+		temp_light1.getMatrix().identity();
+		pressedLeft = false;
+		pressedMiddle = false;
+		pressedRight = false;
+	}
+
+}
+
+void processMotion(int x, int y)
+{
+	xf = (float)x/((float)window::width/2.0) - 1;
+	yf = 1 - (float)y/((float)window::height/2.0);
+	if (pressedLeft)
+	{
+		zf = findZ(xf,yf);
+		Vector3 prev = Vector3(prevX,prevY,prevZ);
+		Vector3 curr = Vector3(xf,yf,zf);
+		
+		Vector3 p = prev.normalize();
+		Vector3 c = curr.normalize();
+		prev.set(p.get(0), p.get(1), p.get(2));
+		curr.set(c.get(0), c.get(1), c.get(2));
+
+		theta = getTheta(prev, curr);
+		Vector3 axis3 = prev.cross(prev, curr);
+		Vector3 a = axis3.normalize();
+		axis3.set(a.get(0), a.get(1), a.get(2));
+
+		Vector4 axis4 = Vector4(axis3.get(0), axis3.get(1), axis3.get(2), 0);
+
+		if (light0Toggle && light1Toggle) {
+			temp_light0.getMatrix().setMatrix(*temp_light0.getMatrix().rotateAA(axis4,theta));
+			temp_light1.getMatrix().setMatrix(*temp_light1.getMatrix().rotateAA(axis4,theta));
+		}
+		else if (light0Toggle) {
+			temp_light0.getMatrix().setMatrix(*temp_light0.getMatrix().rotateAA(axis4,theta));
+		}
+		else if (light1Toggle) {
+			temp_light1.getMatrix().setMatrix(*temp_light1.getMatrix().rotateAA(axis4,theta));
+		}
+		else {
+			temp.getMatrix().setMatrix(*temp.getMatrix().rotateAA(axis4,theta));
+		}
+	}
+	else if (pressedMiddle)
+	{
+		temp.getMatrix().identity();
+		temp.getMatrix().setMatrix(*temp.getMatrix().translate((xf-prevX)*15,(yf-prevY)*15,0));
+	}
+	else if (pressedRight)
+	{
+		float s;
+		if (prevY < yf)
+		{
+			s = 1-(yf-prevY)*-2;
+			temp.getMatrix().identity();
+			temp.getMatrix().setMatrix(*temp.getMatrix().scale(s,s,s));
+		}
+		else
+		{
+			float s = 1+(yf-prevY)*0.5;
+			if (s < 0)
+			{
+				s = 0.0001;
+			}
+			temp.getMatrix().identity();
+			temp.getMatrix().setMatrix(*temp.getMatrix().scale(s,s,s));
+		}
+	}
+}
+
+void processNormalKeys(unsigned char key, int x, int y) {
+	Vector3 v;
+	switch (key)
+	{
+		// point light
+		case '1':
+			light0Toggle = !light0Toggle;
+			if (light0Toggle)
+				glEnable(GL_LIGHT0);
+			else
+				glDisable(GL_LIGHT0);
+			break;
+		// spot light
+		case '2':
+			light1Toggle = !light1Toggle;
+			if (light1Toggle)
+				glEnable(GL_LIGHT1);
+			else
+				glDisable(GL_LIGHT1);
+			break;
+		case 'g':
+			lightShaderToggle = !lightShaderToggle;
+			cout << "g" << endl;
+			if (lightShaderToggle) {
+				cout << "binding" << endl;
+				shader1->bind();
+			}
+			else {
+				cout << "unbinding" << endl;
+				shader1->unbind();
+			}
+			break;
+		case 'r':
+			base.getMatrix().identity();
+			base_light0.getMatrix().identity();
+			base_light1.getMatrix().identity();
+			temp.getMatrix().identity();
+			temp_light0.getMatrix().identity();
+			temp_light1.getMatrix().identity();
+			break;
+	}
+}
+
+//----------------------------------------------------------------------------
+// Callback method called when system is idle.
+void window::idleCallback(void)
+{
+	displayCallback();    // call display routine to redraw cube
+}
+
+//----------------------------------------------------------------------------
+// Callback method called when window is resized.
+void window::reshapeCallback(int w, int h)
+{
+	width = w;
+	height = h;
+	glViewport(0, 0, w, h);  // set new viewport size
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(45.0, float(w)/float(h), 1.0, 100.0);
+}
+
+//----------------------------------------------------------------------------
+// Callback method called when window readraw is necessary or
+// when glutPostRedisplay() was called.
+void window::displayCallback(void)
+{
+	GLfloat diffuse[] = {0.5,0.5,0.5,1.0};
+	GLfloat specular[]  = {0.5, 0.5, 0.5, 1.0};
+	GLfloat shininess[] = {25.0};
+	GLfloat zero[] = {0.0,0.0,0.0,0.0};
+
+	GLfloat light0_position[] = { 1.0, 1.0, 1.0, 0.0 };
+	GLfloat light1_position[] = { -1.5, 0.0, 2.0, 1.0 };
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // clear color and depth buffers
+	glMatrixMode(GL_MODELVIEW);
+
+	world.getMatrix().setMatrix(*base.getMatrix().multiply(temp.getMatrix()));
+	world_light0.getMatrix().setMatrix(*base_light0.getMatrix().multiply(temp_light0.getMatrix()));
+	world_light1.getMatrix().setMatrix(*base_light1.getMatrix().multiply(temp_light1.getMatrix()));
+	camera.inverseCamera();
+
+	glPushMatrix();
+		// Draw the first sphere:
+		cube1.getMatrix().identity();
+		cube1.getMatrix().setMatrix(*cube1.getMatrix().translate(-1.5,0,-2));
+		all.getMatrix().setMatrix(cube1.getMatrix());
+		all.getMatrix().setMatrix(*all.getMatrix().multiply(world.getMatrix()));
+		all.getMatrix().setMatrix(*all.getMatrix().multiply(camera.getMatrix()));
+		glLoadMatrixd(all.getMatrix().getPointer());
+		// Generate specular material properties:
+		glMaterialfv(GL_FRONT, GL_SPECULAR, zero);
+		glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
+		glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse);
+		glutSolidSphere(1.0, 12, 12);
+	glPopMatrix();
+
+	glPushMatrix();
+		// Draw the second sphere:
+		cube2.getMatrix().identity();
+		cube2.getMatrix().setMatrix(*cube2.getMatrix().translate(1.5,0,-2));
+		all.getMatrix().setMatrix(cube2.getMatrix());
+		all.getMatrix().setMatrix(*all.getMatrix().multiply(world.getMatrix()));
+		all.getMatrix().setMatrix(*all.getMatrix().multiply(camera.getMatrix()));
+		glLoadMatrixd(all.getMatrix().getPointer());
+		// Generate specular material properties:
+		glMaterialfv(GL_FRONT, GL_SPECULAR, specular);
+		glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
+		glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse);
+		glutSolidSphere(1.0, 12, 12);
+	glPopMatrix();
+
+	if (light0Toggle) {
+		glPushMatrix();
+			light0.getMatrix().identity();
+			all.getMatrix().setMatrix(light0.getMatrix());
+			all.getMatrix().setMatrix(*all.getMatrix().multiply(world_light0.getMatrix()));
+			all.getMatrix().setMatrix(*all.getMatrix().multiply(camera.getMatrix()));
+			glLoadMatrixd(all.getMatrix().getPointer());
+			glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
+		glPopMatrix();
+	}
+	
+	if (light1Toggle) {
+		glPushMatrix();
+			light1.getMatrix().identity();
+			all.getMatrix().setMatrix(light1.getMatrix());
+			all.getMatrix().setMatrix(*all.getMatrix().multiply(world_light1.getMatrix()));
+			all.getMatrix().setMatrix(*all.getMatrix().multiply(camera.getMatrix()));
+			glLoadMatrixd(all.getMatrix().getPointer());
+			glLightfv(GL_LIGHT1, GL_POSITION, light1_position);
+		glPopMatrix();
+	}
+
+	glutSwapBuffers();
+}
+
+int main(int argc, char *argv[])
+{
+	GLfloat ambient[]         = {0.2, 0.2, 0.2, 1.0};				// default ambient color for all light sources
+
+	glutInit(&argc, argv);											// initialize GLUT
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);		// open an OpenGL context with double buffering, RGB colors, and depth buffering
+	glutInitWindowSize(512, 512);									// set initial window size
+	glutCreateWindow("Two Spheres");								// open window and set window title
+
+	glEnable(GL_DEPTH_TEST);										// enable z-buffer
+	glClearColor(0.0, 0.0, 0.0, 0.0);								// set clear color to black
+
+	// Generate light source:
+	glEnable(GL_LIGHTING);											// enables lighting; this changes the behavior of glColor
+	glDisable(GL_LIGHT0);											// enable a light source; otherwise you will only see ambient light
+	glDisable(GL_LIGHT1);											// enable a light source; otherwise you will only see ambient light
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);				// set the default ambient color
+	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);		// allow glColor to set ambient and diffuse colors of geometry
+
+	// Install callback functions:
+	glutDisplayFunc(window::displayCallback);
+	glutReshapeFunc(window::reshapeCallback);
+	glutIdleFunc(window::idleCallback);
+
+	glutMouseFunc(processMouse);
+	glutMotionFunc(processMotion);
+	glutKeyboardFunc(processNormalKeys);
+  
+	glEnable(GL_NORMALIZE);
+
+	// Initialize cube matrix:
+	all.getMatrix().identity();
+	cube1.getMatrix().identity();
+	cube2.getMatrix().identity();
+	base.getMatrix().identity();
+	temp.getMatrix().identity();
+	world.getMatrix().identity();
+	base_light0.getMatrix().identity();
+	temp_light0.getMatrix().identity();
+	world_light0.getMatrix().identity();
+	base_light1.getMatrix().identity();
+	temp_light1.getMatrix().identity();
+	world_light1.getMatrix().identity();
+
+	light0.getMatrix().identity();
+	light1.getMatrix().identity();
+
+	GLfloat shininess[] = {50.0};
+
+	GLfloat light0_diffuse[] = { 1.0, 0.0, 0.0, 1.0 };
+	GLfloat light0_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+
+	GLfloat light1_diffuse[] = { 0.0, 1.0, 0.0, 1.0 };
+	GLfloat light1_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+	GLfloat light1_direction[] = { 0.0, 0.0, -1.0 };
+
+	GLfloat light0_position[] = { 1.0, 1.0, 1.0, 0.0 };
+	GLfloat light1_position[] = { -1.5, 0.0, 2.0, 1.0 };
+
+	GLfloat vec[] = {10.0};
+
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, light0_specular);
+	glLightfv(GL_LIGHT0, GL_SHININESS, shininess);
+	//glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
+
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, light1_diffuse);
+	glLightfv(GL_LIGHT1, GL_SPECULAR, light1_specular);
+	glLightfv(GL_LIGHT1, GL_SHININESS, shininess);
+	glLightfv(GL_LIGHT1, GL_SPOT_CUTOFF, vec);
+	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, light1_direction);
+	//glLightfv(GL_LIGHT1, GL_POSITION, light1_position);
+
+	shader1 = new Shader(light0_vert,light0_frag,true);
+	shader2 = new Shader(light1_vert,light1_frag,true);
+
+	glutMainLoop();
+	return 0;
+}
+

@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <IncludePath>$(DXSDK_DIR)Include;$(IncludePath)$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;"E:\Downloads\lib\glut-3.7.6-bin\glut-3.7.6-bin\include"</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LibraryPath>$(DXSDK_DIR)Lib\x86;$(LibraryPath)(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib;"E:\Downloads\lib\glut-3.7.6-bin\glut-3.7.6-bin\lib"</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup />
+  <ItemGroup />
+</Project>

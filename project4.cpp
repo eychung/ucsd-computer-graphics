@@ -4,7 +4,7 @@ using namespace std;
 
 static ObjReader objReader;
 
-UINT SkyboxTexture[6];		// We need 6 textures for our Skybox
+UINT texture_array[6];
 
 int nVerts;
 float * vertices;
@@ -62,11 +62,11 @@ GLfloat mat_diffuse[] = {1.0,1.0,1.0,1.0};
 GLfloat mat_specular[]  = {1.0,1.0,1.0,1.0};
 GLfloat mat_shininess[] = {25.0};
 
-GLfloat light0_diffuse[] = { 1.0, 0.827, 0.608, 1.0 };
-GLfloat light0_specular[] = { 1.0, 1.0, 1.0, 1.0 };
-GLfloat light0_shininess[] = {50.0};
-GLfloat light0_position[] = {-50.0,0.0,0.0};
-GLfloat light0_direction[] = {-1.0,-1.0,0.0};
+GLfloat light0_diffuse[] = {1.0,0.827,0.608,1.0};
+GLfloat light0_specular[] = {1.0,1.0,1.0,1.0};
+GLfloat light0_shininess[] = {25.0};
+GLfloat light0_position[] = {0.0,50.0,0.0};
+GLfloat light0_direction[] = {0.8,-1.0,-1.0}; // GHOST CODE
 
 GLfloat zero[] = {0.0,0.0,0.0,0.0};
 
@@ -74,45 +74,18 @@ int window::width  = 512;   // set window width in pixels here
 int window::height = 512;   // set window height in pixels here
 
 Group * g_world;
-Group * g_world_ec;
-Matrix4 m_id = Matrix4();
-
-double r_torso = 0.0;
-double r_head = 0.0;
-double r_shoulder_left = 0.0;
-double r_shoulder_right = 0.0;
-double r_leg_left = 0.0;
-double r_leg_right = 0.0;
-double r_arm_left = 0.0;
-double r_arm_right = 0.0;
-double r_foot_left = 0.0;
-double r_foot_right = 0.0;
-
-bool b_torso = true;
-bool b_head_forward = true;
-bool b_shoulder_left_forward = true;
-bool b_shoulder_right_forward = false;
-bool b_leg_left_forward = true;
-bool b_leg_right_forward = false;
-bool b_arm_left_forward = true;
-bool b_arm_right_forward = false;
-bool b_foot_left_forward = true;
-bool b_foot_right_forward = false;
 
 bool debug = true;
 bool once_flag = true;
 bool animate = true;
 bool culling = true;
 
-int army_size = 20;
+float frustum[6][4];
 
 Vector3 p = Vector3(0,0,5);
 Vector3 l = Vector3(0,0,0);
 Vector3 up = Vector3(0,1,0);
 Vector3 d = Vector3(0,0,1);
-
-float frustum[6][4];
-Vector4 frustum_points[8];
 
 float interval = 0.02;
 
@@ -151,7 +124,7 @@ void Draw_Skybox(float x, float y, float z, float width, float height, float len
 
 	glColor4f(1,1,1,1);
 	// Draw Front side
-	glBindTexture(GL_TEXTURE_2D, SkyboxTexture[SKYFRONT]);
+	glBindTexture(GL_TEXTURE_2D, texture_array[SKYFRONT]);
 	glBegin(GL_QUADS);	
 		glTexCoord2f(0.0f, 1.0f); glVertex3f(x,		  y,		z+length);
 		glTexCoord2f(0.0f, 0.0f); glVertex3f(x,		  y+height, z+length);
@@ -160,7 +133,7 @@ void Draw_Skybox(float x, float y, float z, float width, float height, float len
 	glEnd();
 
 	// Draw Back side
-	glBindTexture(GL_TEXTURE_2D, SkyboxTexture[SKYBACK]);
+	glBindTexture(GL_TEXTURE_2D, texture_array[SKYBACK]);
 	glBegin(GL_QUADS);		
 		glTexCoord2f(0.0f, 1.0f); glVertex3f(x+width, y,		z);
 		glTexCoord2f(0.0f, 0.0f); glVertex3f(x+width, y+height, z); 
@@ -169,7 +142,7 @@ void Draw_Skybox(float x, float y, float z, float width, float height, float len
 	glEnd();
 
 	// Draw Left side
-	glBindTexture(GL_TEXTURE_2D, SkyboxTexture[SKYLEFT]);
+	glBindTexture(GL_TEXTURE_2D, texture_array[SKYLEFT]);
 	glBegin(GL_QUADS);		
 		glTexCoord2f(0.0f, 0.0f); glVertex3f(x,		  y+height,	z);	
 		glTexCoord2f(1.0f, 0.0f); glVertex3f(x,		  y+height,	z+length); 
@@ -178,7 +151,7 @@ void Draw_Skybox(float x, float y, float z, float width, float height, float len
 	glEnd();
 
 	// Draw Right side
-	glBindTexture(GL_TEXTURE_2D, SkyboxTexture[SKYRIGHT]);
+	glBindTexture(GL_TEXTURE_2D, texture_array[SKYRIGHT]);
 	glBegin(GL_QUADS);		
 		glTexCoord2f(1.0f, 1.0f); glVertex3f(x+width, y,		z);
 		glTexCoord2f(0.0f, 1.0f); glVertex3f(x+width, y,		z+length);
@@ -187,7 +160,7 @@ void Draw_Skybox(float x, float y, float z, float width, float height, float len
 	glEnd();
 
 	// Draw Up side
-	glBindTexture(GL_TEXTURE_2D, SkyboxTexture[SKYUP]);
+	glBindTexture(GL_TEXTURE_2D, texture_array[SKYUP]);
 	glBegin(GL_QUADS);		
 		glTexCoord2f(1.0f, 0.0f); glVertex3f(x+width, y+height, z);
 		glTexCoord2f(1.0f, 1.0f); glVertex3f(x+width, y+height, z+length); 
@@ -678,7 +651,9 @@ void window::displayCallback(void)
 
 	// WORLD
 	glEnable(GL_LIGHTING);
+	//glDisable(GL_LIGHTING);
 	g_world->draw(world.getMatrix());
+	//glEnable(GL_LIGHTING);
 	glDisable(GL_LIGHTING);
 
 	glutSwapBuffers();
@@ -770,11 +745,12 @@ int main(int argc, char *argv[])
 	objReader.readObj("Moskvitch.obj", nVerts, &vertices, &normals, &texcoords, nIndices, &indices);
 
 	cout << "Loading texture files" << endl;
-	loadTexture(SkyboxTexture,"desert_front.ppm", SKYFRONT);
-	loadTexture(SkyboxTexture,"desert_back.ppm", SKYBACK);
-	loadTexture(SkyboxTexture,"desert_left.ppm", SKYLEFT);
-	loadTexture(SkyboxTexture,"desert_right.ppm", SKYRIGHT);
-	loadTexture(SkyboxTexture,"desert_top.ppm", SKYUP);
+	loadTexture(texture_array,"desert_front.ppm", SKYFRONT);
+	loadTexture(texture_array,"desert_back.ppm", SKYBACK);
+	loadTexture(texture_array,"desert_left.ppm", SKYLEFT);
+	loadTexture(texture_array,"desert_right.ppm", SKYRIGHT);
+	loadTexture(texture_array,"desert_top.ppm", SKYUP);
+	loadTexture(texture_array,"rust.ppm", 5);
 
 	cout << "Generating terrain" << endl;
 	terrain_helper->terrainLoad(500,500,1);

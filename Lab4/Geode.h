@@ -8,7 +8,6 @@
 #include "../Matrix4.h"
 
 extern float frustum[6][4];
-extern Vector4 frustum_points[8];
 
 class Geode : public Node {
 	protected:

@@ -255,7 +255,7 @@ void drawFPS()
 	glLoadIdentity ();
 	glColor3d(1.0,1.0,1.0);
 	//  Print the FPS to the window
-	printw (-18, -18, 0, "FPS: %4.2f", fps);
+	printw (9.5, 18.5, 0, "FPS: %4.2f", fps);
 	glEnable(GL_LIGHTING);
 }
 
@@ -691,6 +691,7 @@ void window::displayCallback(void)
 	if (toggle_shader) shader->bind();
 	cube.drawObj();
 	if (toggle_shader) shader->unbind();
+	drawFPS();
 	glDisable(GL_LIGHT0);
 	glDisable(GL_LIGHTING);
 

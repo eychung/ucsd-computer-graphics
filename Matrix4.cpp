@@ -7,11 +7,19 @@ using namespace std;
 
 Matrix4::Matrix4()
 {
-  for (int i=0; i<4; ++i)
+  /*for (int i=0; i<4; ++i)
   {
     for (int j=0; j<4; ++j)
     {
       m[i][j] = 0;
+    }
+  }*/
+  float ident[4][4]={{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
+  for (int i=0; i<4; ++i)
+  {
+    for (int j=0; j<4; ++j)
+    {
+      m[i][j] = ident[i][j];
     }
   }
 } 

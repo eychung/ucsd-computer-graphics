@@ -14,9 +14,11 @@ int nIndices;
 int * indices;
 
 float running = 0.0;
+float angle = 0.0;
 
 static Camera camera;
 static Cube terrain;
+static Cube character;
 static Cube all;			// Final matrix
 static Cube cube;			// Object matrix
 static Cube cube1;			// Object matrix
@@ -32,6 +34,7 @@ static Cube world_light0;
 static Cube base_light1;
 static Cube temp_light1;
 static Cube world_light1;
+static Cube rotation;
 
 static Cube dragon;
 static bool sphere = true;
@@ -42,13 +45,6 @@ bool toggle_shader = false;
 bool toggle_texture = false;
 
 int shader_state = -1;
-
-char light0_vert[] = "light0_shading.vert";
-char light0_frag[] = "light0_shading.frag";
-char light1_vert[] = "light1_shading.vert";
-char light1_frag[] = "light1_shading.frag";
-char lightX_vert[] = "lightX_shading.vert";
-char lightX_frag[] = "lightX_shading.frag";
 
 char toon_vert[] = "toon.vert";
 char toon_frag[] = "toon.frag";
@@ -65,10 +61,12 @@ GLfloat mat_diffuse[] = {1.0,1.0,1.0,1.0};
 GLfloat mat_specular[]  = {1.0,1.0,1.0,1.0};
 GLfloat mat_shininess[] = {25.0};
 
+float light_pos[] = {-10.0,0.0,-50.0};
+
 GLfloat light0_diffuse[] = { 0.0, 1.0, 0.0, 1.0 };
 GLfloat light0_specular[] = { 1.0, 1.0, 1.0, 1.0 };
 GLfloat light0_shininess[] = {50.0};
-GLfloat light0_position[] = {0.0,10.0,-5.0,1.0};
+GLfloat light0_position[] = {light_pos[0],light_pos[1],light_pos[2],1.0};
 GLfloat light0_direction[] = {0.0,10.0,-1.0};
 
 GLfloat zero[] = {0.0,0.0,0.0,0.0};
@@ -109,7 +107,7 @@ bool culling = true;
 
 int army_size = 20;
 
-Vector3 p = Vector3(0,0,10);
+Vector3 p = Vector3(0,0,5);
 Vector3 l = Vector3(0,0,0);
 Vector3 up = Vector3(0,1,0);
 Vector3 d = Vector3(0,0,1);
@@ -153,12 +151,11 @@ Matrix4& Cube::getMatrix()
 
 void Draw_Skybox(float x, float y, float z, float width, float height, float length)
 {
-	glPushAttrib(GL_ENABLE_BIT);
+	//glPushAttrib(GL_ENABLE_BIT);
 	glDisable(GL_LIGHT0);
     glEnable(GL_TEXTURE_2D);
-    glDisable(GL_DEPTH_TEST);
     glDisable(GL_LIGHTING);
-    glDisable(GL_BLEND);
+    //glDisable(GL_BLEND);
 	// Center the Skybox around the given x,y,z position
 	x = x - width  / 2;
 	y = y - height / 2;
@@ -218,9 +215,10 @@ void Draw_Skybox(float x, float y, float z, float width, float height, float len
 		glTexCoord2f(1.0f, 1.0f); glVertex3f(x+width, y,		z+length); 
 		glTexCoord2f(0.0f, 1.0f); glVertex3f(x+width, y,		z);
 	glEnd();*/
+    //glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHT0);
 	glEnable(GL_LIGHTING);
-	glDisable(GL_TEXTURE);
+	glDisable(GL_TEXTURE_2D);
 }
 
 void Cube::drawObj()
@@ -237,9 +235,12 @@ void Cube::drawObj()
 		glVertex3f(vertices[indices[i+1]*3],vertices[indices[i+1]*3+1],vertices[indices[i+1]*3+2]);
 		glVertex3f(vertices[indices[i+2]*3],vertices[indices[i+2]*3+1],vertices[indices[i+2]*3+2]);
 
-		glNormal3f(normals[indices[i]*3],normals[indices[i]*3+1],normals[indices[i]*3+2]);
-		glNormal3f(normals[indices[i+1]*3],normals[indices[i+1]*3+1],normals[indices[i+1]*3+2]);
-		glNormal3f(normals[indices[i+2]*3],normals[indices[i+2]*3+1],normals[indices[i+2]*3+2]);
+		if (normals != NULL)
+		{
+			glNormal3f(normals[indices[i]*3],normals[indices[i]*3+1],normals[indices[i]*3+2]);
+			glNormal3f(normals[indices[i+1]*3],normals[indices[i+1]*3+1],normals[indices[i+1]*3+2]);
+			glNormal3f(normals[indices[i+2]*3],normals[indices[i+2]*3+1],normals[indices[i+2]*3+2]);
+		}
 	}
 	glEnd();
 }
@@ -443,20 +444,18 @@ void processNormalKeys(unsigned char key, int x, int y) {
 	switch (key)
 	{
 		case 'w':
-			//cube1.getMatrix().setMatrix4(cube1.getMatrix().translate(0,0,-1.0));
-			terrain.getMatrix().setMatrix(terrain.getMatrix().translate(0.0,0,1.0));
+			world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,1.1));
 			break;
 		case 's':
-			/*cube1.getMatrix().setMatrix(cube1.getMatrix().translate(0,0,1.0));
-			v = Vector3(camera.getE()[0],camera.getE()[1],camera.getE()[2]+1.0);
-			camera.setE(v);*/
-			terrain.getMatrix().setMatrix(terrain.getMatrix().translate(0.0,0,-1.0));
+			world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,-1.1));
 			break;
 		case 'a':
-			terrain.getMatrix().setMatrix(terrain.getMatrix().translate(1.0,0,0.0));
+			rotation.getMatrix().setMatrix(world.getMatrix().rotateY(-0.05));
+			world.getMatrix().setMatrix(world.getMatrix().multiply(rotation.getMatrix()));
 			break;
 		case 'd':
-			terrain.getMatrix().setMatrix(terrain.getMatrix().translate(-1.0,0,0.0));
+			rotation.getMatrix().setMatrix(world.getMatrix().rotateY(0.05));
+			world.getMatrix().setMatrix(world.getMatrix().multiply(rotation.getMatrix()));
 			break;
 		case '1':
 			light0Toggle = !light0Toggle;
@@ -466,15 +465,12 @@ void processNormalKeys(unsigned char key, int x, int y) {
 				glDisable(GL_LIGHT0);
 			break;
 		case 'r':
-			base.getMatrix().identity();
-			temp.getMatrix().identity();
+			//base.getMatrix().identity();
+			//temp.getMatrix().identity();
+			world.getMatrix().identity();
 			break;
 		case 'h':
 			toggle_shader = !toggle_shader;
-			/*if (toggle_shader)
-				shader->bind();
-			else
-				shader->unbind();*/
 			break;
 		case 't':
 			toggle_texture = !toggle_texture;
@@ -497,201 +493,6 @@ void processNormalKeys(unsigned char key, int x, int y) {
 			exit(0);
 			break;
 	}
-}
-
-void constructPlanes(Vector4 p[])
-{
-	Vector4 t4;
-	Vector3 t3, v, u, n;
-	// Near (ntl, ntr, nbl)
-	v = t4.makeVector3Point(p[NTR])-t4.makeVector3Point(p[NTL]);
-	u = t4.makeVector3Point(p[NBL])-t4.makeVector3Point(p[NTL]);
-	n = t3.cross(v,u).normalize();
-	frustum[0][0] = n[0]/n.magnitude();
-	frustum[0][1] = n[1]/n.magnitude();
-	frustum[0][2] = n[2]/n.magnitude();
-	frustum[0][3] = -(n.dot(t4.makeVector3Point(p[NTR])));
-
-	// Far (ftl, ftr, fbl)
-	v = t4.makeVector3Point(p[FTR])-t4.makeVector3Point(p[FTL]);
-	u = t4.makeVector3Point(p[FBL])-t4.makeVector3Point(p[FTL]);
-	n = t3.cross(v,u).normalize();
-	frustum[1][0] = n[0]/n.magnitude();
-	frustum[1][1] = n[1]/n.magnitude();
-	frustum[1][2] = n[2]/n.magnitude();
-	frustum[1][3] = -(n.dot(t4.makeVector3Point(p[FTL])));
-
-	// Left (ntl, ftl, nbl)
-	v = t4.makeVector3Point(p[FTL])-t4.makeVector3Point(p[NTL]);
-	u = t4.makeVector3Point(p[NBL])-t4.makeVector3Point(p[NTL]);
-	n = t3.cross(v,u).normalize();
-	frustum[2][0] = n[0]/n.magnitude();
-	frustum[2][1] = n[1]/n.magnitude();
-	frustum[2][2] = n[2]/n.magnitude();
-	frustum[2][3] = -(n.dot(t4.makeVector3Point(p[NTL])));
-
-	// Right (ntr, ftr, fbr)
-	v = t4.makeVector3Point(p[FTR])-t4.makeVector3Point(p[NTR]);
-	u = t4.makeVector3Point(p[FBR])-t4.makeVector3Point(p[NTR]);
-	n = t3.cross(v,u).normalize();
-	frustum[3][0] = n[0]/n.magnitude();
-	frustum[3][1] = n[1]/n.magnitude();
-	frustum[3][2] = n[2]/n.magnitude();
-	frustum[3][3] = -(n.dot(t4.makeVector3Point(p[NTR])));
-
-	// Top (ntl, ftl, ftr)
-	v = t4.makeVector3Point(p[FTL])-t4.makeVector3Point(p[NTL]);
-	u = t4.makeVector3Point(p[FTR])-t4.makeVector3Point(p[NTL]);
-	n = t3.cross(v,u).normalize();
-	frustum[4][0] = n[0]/n.magnitude();
-	frustum[4][1] = n[1]/n.magnitude();
-	frustum[4][2] = n[2]/n.magnitude();
-	frustum[4][3] = -(n.dot(t4.makeVector3Point(p[NTL])));
-
-	// Bottom (nbl, fbl, fbr)
-	v = t4.makeVector3Point(p[FBL])-t4.makeVector3Point(p[NBL]);
-	u = t4.makeVector3Point(p[FBR])-t4.makeVector3Point(p[NBL]);
-	n = t3.cross(v,u).normalize();
-	frustum[5][0] = n[0];
-	frustum[5][1] = n[1];
-	frustum[5][2] = n[2];
-	frustum[5][3] = -(n.dot(t4.makeVector3Point(p[NBL])));
-
-}
-
-void setDefaultFrustum()
-{
-	Vector3 right = camera.getUp().cross(camera.getUp(),d);
-	Vector3 fc = camera.getE()+(d.scale(zFar));
-	Vector3 v;
-
-	v = fc+(camera.getUp().scale(vf_hfar/2))-(right.scale(vf_wfar/2));
-	Vector4 ftl = Vector4(v.get(0), v.get(1), v.get(2), 1);
-	v = fc+(camera.getUp().scale(vf_hfar/2))+(right.scale(vf_wfar/2));
-	Vector4 ftr = Vector4(v.get(0), v.get(1), v.get(2), 1);
-	v = fc-(camera.getUp().scale(vf_hfar/2))-(right.scale(vf_wfar/2));
-	Vector4 fbl = Vector4(v.get(0), v.get(1), v.get(2), 1);
-	v = fc-(camera.getUp().scale(vf_hfar/2))+(right.scale(vf_wfar/2));
-	Vector4 fbr = Vector4(v.get(0), v.get(1), v.get(2), 1);
-
-	Vector3 nc = p+(d.scale(zNear));
-	v = nc+(camera.getUp().scale(vf_hnear/2))-(right.scale(vf_wnear/2));
-	Vector4 ntl = Vector4(v.get(0), v.get(1), v.get(2), 1);
-	v = nc+(camera.getUp().scale(vf_hnear/2))+(right.scale(vf_wnear/2));
-	Vector4 ntr = Vector4(v.get(0), v.get(1), v.get(2), 1);
-	v = nc-(camera.getUp().scale(vf_hnear/2))-(right.scale(vf_wnear/2));
-	Vector4 nbl = Vector4(v.get(0), v.get(1), v.get(2), 1);
-	v = nc-(camera.getUp().scale(vf_hnear/2))+(right.scale(vf_wnear/2));
-	Vector4 nbr = Vector4(v.get(0), v.get(1), v.get(2), 1);
-
-	frustum_points[FTL] = ftl;
-	frustum_points[FTR] = ftr;
-	frustum_points[FBL] = fbl;
-	frustum_points[FBR] = fbr;
-	frustum_points[NTL] = ntl;
-	frustum_points[NTR] = ntr;
-	frustum_points[NBL] = nbl;
-	frustum_points[NBR] = nbr;
-
-	constructPlanes(frustum_points);
-}
-
-void ExtractFrustum(Matrix4 m)
-{
-	float proj[16];
-	float modl[16];
-	float clip[16];
-	float t;
-	/* Get the current PROJECTION matrix from OpenGL */
-	glGetFloatv( GL_PROJECTION_MATRIX, proj );
-	/* Get the current MODELVIEW matrix from OpenGL */
-	//glGetFloatv( GL_MODELVIEW_MATRIX, modl );
-	for (int i=0; i<16; i++) {
-		modl[i] = *(m.getPointer()+i);
-	}
-	/* Combine the two matrices (multiply projection by modelview)    */
-	clip[ 0] = modl[ 0] * proj[ 0] + modl[ 1] * proj[ 4] + modl[ 2] * proj[ 8] +    modl[ 3] * proj[12];
-	clip[ 1] = modl[ 0] * proj[ 1] + modl[ 1] * proj[ 5] + modl[ 2] * proj[ 9] +    modl[ 3] * proj[13];
-	clip[ 2] = modl[ 0] * proj[ 2] + modl[ 1] * proj[ 6] + modl[ 2] * proj[10] +    modl[ 3] * proj[14];
-	clip[ 3] = modl[ 0] * proj[ 3] + modl[ 1] * proj[ 7] + modl[ 2] * proj[11] +    modl[ 3] * proj[15];
-	clip[ 4] = modl[ 4] * proj[ 0] + modl[ 5] * proj[ 4] + modl[ 6] * proj[ 8] +    modl[ 7] * proj[12];
-	clip[ 5] = modl[ 4] * proj[ 1] + modl[ 5] * proj[ 5] + modl[ 6] * proj[ 9] +    modl[ 7] * proj[13];
-	clip[ 6] = modl[ 4] * proj[ 2] + modl[ 5] * proj[ 6] + modl[ 6] * proj[10] +    modl[ 7] * proj[14];
-	clip[ 7] = modl[ 4] * proj[ 3] + modl[ 5] * proj[ 7] + modl[ 6] * proj[11] +    modl[ 7] * proj[15];
-	clip[ 8] = modl[ 8] * proj[ 0] + modl[ 9] * proj[ 4] + modl[10] * proj[ 8] +    modl[11] * proj[12];
-	clip[ 9] = modl[ 8] * proj[ 1] + modl[ 9] * proj[ 5] + modl[10] * proj[ 9] +    modl[11] * proj[13];
-	clip[10] = modl[ 8] * proj[ 2] + modl[ 9] * proj[ 6] + modl[10] * proj[10] +    modl[11] * proj[14];
-	clip[11] = modl[ 8] * proj[ 3] + modl[ 9] * proj[ 7] + modl[10] * proj[11] +    modl[11] * proj[15];
-	clip[12] = modl[12] * proj[ 0] + modl[13] * proj[ 4] + modl[14] * proj[ 8] +    modl[15] * proj[12];
-	clip[13] = modl[12] * proj[ 1] + modl[13] * proj[ 5] + modl[14] * proj[ 9] +    modl[15] * proj[13];
-	clip[14] = modl[12] * proj[ 2] + modl[13] * proj[ 6] + modl[14] * proj[10] +    modl[15] * proj[14];
-	clip[15] = modl[12] * proj[ 3] + modl[13] * proj[ 7] + modl[14] * proj[11] +    modl[15] * proj[15];
-	/* Extract the numbers for the RIGHT plane */
-	frustum[0][0] = clip[ 3] - clip[ 0];
-	frustum[0][1] = clip[ 7] - clip[ 4];
-	frustum[0][2] = clip[11] - clip[ 8];
-	frustum[0][3] = clip[15] - clip[12];
-	/* Normalize the result */
-	t = sqrt( frustum[0][0] * frustum[0][0] + frustum[0][1] * frustum[0][1] + frustum[0][2]    * frustum[0][2] );
-	frustum[0][0] /= t;
-	frustum[0][1] /= t;
-	frustum[0][2] /= t;
-	frustum[0][3] /= t;
-	/* Extract the numbers for the LEFT plane */
-	frustum[1][0] = clip[ 3] + clip[ 0];
-	frustum[1][1] = clip[ 7] + clip[ 4];
-	frustum[1][2] = clip[11] + clip[ 8];
-	frustum[1][3] = clip[15] + clip[12];
-	/* Normalize the result */
-	t = sqrt( frustum[1][0] * frustum[1][0] + frustum[1][1] * frustum[1][1] + frustum[1][2]    * frustum[1][2] );
-	frustum[1][0] /= t;
-	frustum[1][1] /= t;
-	frustum[1][2] /= t;
-	frustum[1][3] /= t;
-	/* Extract the BOTTOM plane */
-	frustum[2][0] = clip[ 3] + clip[ 1];
-	frustum[2][1] = clip[ 7] + clip[ 5];
-	frustum[2][2] = clip[11] + clip[ 9];
-	frustum[2][3] = clip[15] + clip[13];
-	/* Normalize the result */
-	t = sqrt( frustum[2][0] * frustum[2][0] + frustum[2][1] * frustum[2][1] + frustum[2][2]    * frustum[2][2] );
-	frustum[2][0] /= t;
-	frustum[2][1] /= t;
-	frustum[2][2] /= t;
-	frustum[2][3] /= t;
-	/* Extract the TOP plane */
-	frustum[3][0] = clip[ 3] - clip[ 1];
-	frustum[3][1] = clip[ 7] - clip[ 5];
-	frustum[3][2] = clip[11] - clip[ 9];
-	frustum[3][3] = clip[15] - clip[13];
-	/* Normalize the result */
-	t = sqrt( frustum[3][0] * frustum[3][0] + frustum[3][1] * frustum[3][1] + frustum[3][2]    * frustum[3][2] );
-	frustum[3][0] /= t;
-	frustum[3][1] /= t;
-	frustum[3][2] /= t;
-	frustum[3][3] /= t;
-	/* Extract the FAR plane */
-	frustum[4][0] = clip[ 3] - clip[ 2];
-	frustum[4][1] = clip[ 7] - clip[ 6];
-	frustum[4][2] = clip[11] - clip[10];
-	frustum[4][3] = clip[15] - clip[14];
-	/* Normalize the result */
-	t = sqrt( frustum[4][0] * frustum[4][0] + frustum[4][1] * frustum[4][1] + frustum[4][2]    * frustum[4][2] );
-	frustum[4][0] /= t;
-	frustum[4][1] /= t;
-	frustum[4][2] /= t;
-	frustum[4][3] /= t;
-	/* Extract the NEAR plane */
-	frustum[5][0] = clip[ 3] + clip[ 2];
-	frustum[5][1] = clip[ 7] + clip[ 6];
-	frustum[5][2] = clip[11] + clip[10];
-	frustum[5][3] = clip[15] + clip[14];
-	/* Normalize the result */
-	t = sqrt( frustum[5][0] * frustum[5][0] + frustum[5][1] * frustum[5][1] + frustum[5][2]    * frustum[5][2] );
-	frustum[5][0] /= t;
-	frustum[5][1] /= t;
-	frustum[5][2] /= t;
-	frustum[5][3] /= t;
 }
 
 /** Load a ppm file from disk.
@@ -753,26 +554,6 @@ unsigned char* loadPPM(const char* filename, int& width, int& height)
 	return rawData;
 }
 
-void Draw_Grid()
-{															
-	glDisable(GL_LIGHTING);
-	glDisable(GL_LIGHT0);
-	for(float i = -500; i <= 500; i += 5)
-	{
-		glBegin(GL_QUADS);
-			//glColor3ub(150, 190, 150);						
-			glColor3f(1,1,1);
-			glVertex3f(-500, -150, i);					
-			glVertex3f(500, -150, i);
-			glVertex3f(i, -150,-500);							
-			glVertex3f(i, -150, 500);
-		glEnd();
-	}
-	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHTING);
-}
-
-
 // load image file into texture object
 void loadTexture(UINT textureArray[], char* strFileName, int ID)
 {
@@ -825,14 +606,10 @@ void window::reshapeCallback(int w, int h)
 	width = w;
 	height = h;
 	glViewport(0, 0, w, h);  // set new viewport size
-
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-
-	//glFrustum(-10.0 * width_ar, 10.0 * width_ar, -10.0 * height_ar, 10.0 * height_ar, 10.0, 1000.0); // set perspective projection viewing frustum
-	gluPerspective(90.0, w/(float)h, 0, 1000);
+	gluPerspective(90.0, w/(float)h, 1, 1000);
 	glTranslatef(0, -5, -15);
-
 	glMatrixMode(GL_MODELVIEW);
 }
 
@@ -843,87 +620,63 @@ void window::displayCallback(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // clear color and depth buffers
 
-	world.getMatrix().setMatrix(base.getMatrix().multiply(temp.getMatrix()));
+	//world.getMatrix().setMatrix(base.getMatrix().multiply(temp.getMatrix()));
 	camera.inverseCamera();
-	
-	// world * camera
-	// calculate skybox matrix and draw skybox
-	cube.getMatrix().identity();
-	cube2.getMatrix().identity();
-	all.getMatrix().setMatrix(cube.getMatrix());
-	all.getMatrix().setMatrix(all.getMatrix().multiply(cube2.getMatrix().translate(0,150,0)));
-	all.getMatrix().setMatrix(all.getMatrix().multiply(terrain.getMatrix()));
-	all.getMatrix().setMatrix(all.getMatrix().multiply(world.getMatrix()));
-	all.getMatrix().setMatrix(all.getMatrix().multiply(camera.getMatrix()));
-	glLoadMatrixf(all.getMatrix().getPointer());
-	Draw_Skybox(0,0,0,500,500,500);	// Draw the Skybox
-	//Draw_Grid();
 
-	//calculate terrain matrix and draw terrain
+	// CHARACTER
+	glDisable(GL_LIGHTING);
+	cube.getMatrix().identity();
+	all.getMatrix().setMatrix(cube.getMatrix().rotateY(PI/2));
+	all.getMatrix().setMatrix(all.getMatrix().multiply(camera.getMatrix())); // YOU
+	glLoadMatrixf(all.getMatrix().getPointer());
+	glColor3f(1.0,1.0,1.0);
+	//glutSolidSphere(2.0,20,20);
+	cube.drawObj();
+	glEnable(GL_LIGHTING);
+
 	cube.getMatrix().identity();
 	all.getMatrix().setMatrix(cube.getMatrix());
-	all.getMatrix().setMatrix(all.getMatrix().multiply(cube2.getMatrix().translate(0,-3,0)));
-	all.getMatrix().setMatrix(all.getMatrix().multiply(terrain.getMatrix()));
 	all.getMatrix().setMatrix(all.getMatrix().multiply(world.getMatrix()));
-	all.getMatrix().setMatrix(all.getMatrix().multiply(camera.getMatrix()));
 	glLoadMatrixf(all.getMatrix().getPointer());
+	Draw_Skybox(0,150,0,1000,1000,1000);
 	glCallList(terrainListID);
 	
-	//calculate teapot matrix and draw teapot
-	cube.getMatrix().identity();
-	all.getMatrix().setMatrix(cube.getMatrix());
-	all.getMatrix().setMatrix(all.getMatrix().multiply(world.getMatrix()));
-	all.getMatrix().setMatrix(all.getMatrix().multiply(camera.getMatrix()));
-	all.getMatrix().setMatrix(all.getMatrix().multiply(cube1.getMatrix()));
-	glLoadMatrixf(all.getMatrix().getPointer());
-	if (toggle_shader) shader->bind();
-	glutSolidTeapot(5.0);
-	if (toggle_shader) shader->unbind();
-
+	// WORLD
 	glDisable(GL_LIGHTING);
-	glDisable(GL_LIGHT0);
-	light0.getMatrix().identity();
-	light0.getMatrix().setMatrix(light0.getMatrix().translate(0.0,10.0,5.0));
-	all.getMatrix().setMatrix(light0.getMatrix());
-	all.getMatrix().setMatrix(all.getMatrix().multiply(terrain.getMatrix()));
-	all.getMatrix().setMatrix(all.getMatrix().multiply(world.getMatrix()));
-	glLoadMatrixf(all.getMatrix().getPointer());
-	glColor3f(1.0,0.0,0.0);
-	glutSolidSphere(1.0,20,20);
-	glEnable(GL_LIGHT0);
+	g_world->draw(world.getMatrix());
 	glEnable(GL_LIGHTING);
-
-
-	glDisable(GL_LIGHTING);
-	glDisable(GL_LIGHT0);
-	light0.getMatrix().identity();
-	light0.getMatrix().setMatrix(light0.getMatrix().translate(2.0,20.0,1.0));
-	all.getMatrix().setMatrix(light0.getMatrix());
-	all.getMatrix().setMatrix(all.getMatrix().multiply(terrain.getMatrix()));
-	all.getMatrix().setMatrix(all.getMatrix().multiply(world.getMatrix()));
-	glLoadMatrixf(all.getMatrix().getPointer());
-	glColor3f(1.0,0.0,0.0);
-	glutSolidSphere(1.0,20,20);
-	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHTING);
-
-	glDisable(GL_LIGHTING);
-	glDisable(GL_LIGHT0);
-	light0.getMatrix().identity();
-	light0.getMatrix().setMatrix(light0.getMatrix().translate(6.0,-10.0,5.0));
-	all.getMatrix().setMatrix(light0.getMatrix());
-	all.getMatrix().setMatrix(all.getMatrix().multiply(terrain.getMatrix()));
-	all.getMatrix().setMatrix(all.getMatrix().multiply(world.getMatrix()));
-	glLoadMatrixf(all.getMatrix().getPointer());
-	glColor3f(1.0,0.0,0.0);
-	glutSolidSphere(1.0,20,20);
-	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHTING);
-
-	drawFPS();
-
+	
 	glutSwapBuffers();
+	
 }
+
+void createWorld()
+{
+	Matrix4 m_world = Matrix4();
+	m_world.identity();
+	g_world = new MatrixTransform(id_world, m_world);
+	int i,j;
+	int id = 0;
+	srand(1);
+	/*for (i=-army_size; i<=army_size; i+=5)
+	{
+		for (j=-army_size; j<=army_size; j+=5)
+		{*/
+	while (id < 200) {
+			//Group* g_robot = createRobot();
+			Geode* mesh_obj = new Sphere(TORSO);
+			Matrix4 m_obj = Matrix4();
+			m_obj.setMatrix(m_obj.translate(rand()%300-rand()%300,0,rand()%300-rand()%300));
+			char id_obj[] = "hi";
+			Group* mt_obj = new MatrixTransform(id_obj, m_obj);
+			g_world->addNode(mt_obj);
+			mt_obj->addNode(mesh_obj);
+			id+=1;
+	}
+		/*}
+	}*/
+}
+
 
 
 int main(int argc, char *argv[])
@@ -969,6 +722,7 @@ int main(int argc, char *argv[])
 
 	// Initialize cube matrix:
 	m_id.identity();
+	character.getMatrix().identity();
 	all.getMatrix().identity();
 	cube.getMatrix().identity();
 	cube1.getMatrix().identity();
@@ -978,6 +732,7 @@ int main(int argc, char *argv[])
 	temp.getMatrix().identity();
 	world.getMatrix().identity();
 	terrain.getMatrix().identity();
+	rotation.getMatrix().identity();
 
 	// Shaders
 	shader = new Shader(toon_vert,toon_frag,true);
@@ -985,6 +740,7 @@ int main(int argc, char *argv[])
 	/*cout << "Loading dragon_smooth.obj" << endl;
 	objReader.readObj("car.obj", nVerts, &vertices, &normals, &texcoords, nIndices, &indices);
 	cout << "done loading" << endl;*/
+	objReader.readObj("cow.obj", nVerts, &vertices, &normals, &texcoords, nIndices, &indices);
 
 	camera.lookAt(p,l,up);
 
@@ -992,6 +748,8 @@ int main(int argc, char *argv[])
 	vf_wnear = vf_hnear*aspect;
 	vf_hfar = 2*tan(fovy/2)*zFar;
 	vf_wfar = vf_hfar*aspect;
+
+	createWorld();
 
 	loadTexture(SkyboxTexture,"desert_front.ppm", SKYFRONT);
 	loadTexture(SkyboxTexture,"desert_back.ppm", SKYBACK);

@@ -18,13 +18,13 @@ Sphere::Sphere(int id)
 GLfloat light_diffuse[] = {1.0,0.0,0.0,1.0};
 extern GLfloat mat_specular[];
 extern GLfloat mat_shininess[];
-extern GLfloat mat_diffuse[];
+extern GLfloat mat_diffuse_car[];
 
 void drawObj()
 {
 	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
 	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse_car);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
 	glColor3f(1.0,1.0,1.0);
 	glBegin(GL_TRIANGLES);

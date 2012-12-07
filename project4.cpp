@@ -58,15 +58,17 @@ bool pressedLeft, pressedMiddle, pressedRight;
 
 float theta, axis;
 
-GLfloat mat_diffuse[] = {1.0,1.0,1.0,1.0};
+GLfloat mat_diffuse_car[] = {1.0,1.0,1.0,1.0};
+GLfloat mat_diffuse_character[] = {1.0,0.0,0.0,1.0};
 GLfloat mat_specular[]  = {1.0,1.0,1.0,1.0};
 GLfloat mat_shininess[] = {25.0};
 
 GLfloat light0_diffuse[] = {1.0,0.827,0.608,1.0};
+GLfloat light0_diffuse_character[] = {1.0,0.0,0.0,1.0};
 GLfloat light0_specular[] = {1.0,1.0,1.0,1.0};
 GLfloat light0_shininess[] = {25.0};
 GLfloat light0_position[] = {0.0,50.0,0.0};
-GLfloat light0_direction[] = {0.8,-1.0,-1.0}; // GHOST CODE
+GLfloat light0_direction[] = {0.8,-1.0,0.0}; // GHOST CODE
 
 GLfloat zero[] = {0.0,0.0,0.0,0.0};
 
@@ -610,8 +612,6 @@ void window::displayCallback(void)
 	camera.inverseCamera();
 
 	// CHARACTER
-	//glDisable(GL_LIGHTING);
-	//glDisable(GL_LIGHT0);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	cube.getMatrix().identity();
@@ -621,23 +621,20 @@ void window::displayCallback(void)
 	glColor3f(1.0,1.0,1.0);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
 	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse_character);
 	if (toggle_shader) shader->bind();
 	glutSolidSphere(2,30,30);
-	//cube.drawObj();
 	if (toggle_shader) shader->unbind();
 	drawFPS();
 	glDisable(GL_LIGHTING);
 	glDisable(GL_LIGHT0);
-	//glEnable(GL_LIGHT0);
-	//glEnable(GL_LIGHTING);
 
-	all.getMatrix().setMatrix(world.getMatrix());
-	glLoadMatrixf(all.getMatrix().getPointer());
+	glLoadMatrixf(world.getMatrix().getPointer());
 	Draw_Skybox(0,150,0,1000,1000,1000);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
 	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
 	glCallList(terrainListID);
+	
 
 	glDisable(GL_LIGHTING);
 	light0.getMatrix().identity();
@@ -651,9 +648,7 @@ void window::displayCallback(void)
 
 	// WORLD
 	glEnable(GL_LIGHTING);
-	//glDisable(GL_LIGHTING);
 	g_world->draw(world.getMatrix());
-	//glEnable(GL_LIGHTING);
 	glDisable(GL_LIGHTING);
 
 	glutSwapBuffers();

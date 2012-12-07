@@ -62,7 +62,7 @@ GLfloat mat_diffuse[] = {1.0,1.0,1.0,1.0};
 GLfloat mat_specular[]  = {1.0,1.0,1.0,1.0};
 GLfloat mat_shininess[] = {25.0};
 
-GLfloat light0_diffuse[] = { 0.0, 1.0, 0.0, 1.0 };
+GLfloat light0_diffuse[] = { 1.0, 0.827, 0.608, 1.0 };
 GLfloat light0_specular[] = { 1.0, 1.0, 1.0, 1.0 };
 GLfloat light0_shininess[] = {50.0};
 GLfloat light0_position[] = {-50.0,0.0,0.0};
@@ -111,16 +111,6 @@ Vector3 l = Vector3(0,0,0);
 Vector3 up = Vector3(0,1,0);
 Vector3 d = Vector3(0,0,1);
 
-GLdouble fovy = 45.0;
-GLdouble aspect = float(window::width)/float(window::height);
-GLdouble zNear = 1.0;
-GLdouble zFar = 1000.0;
-
-GLdouble vf_hnear;
-GLdouble vf_wnear;
-GLdouble vf_hfar;
-GLdouble vf_wfar;
-
 float frustum[6][4];
 Vector4 frustum_points[8];
 
@@ -150,11 +140,10 @@ Matrix4& Cube::getMatrix()
 
 void Draw_Skybox(float x, float y, float z, float width, float height, float length)
 {
-	//glPushAttrib(GL_ENABLE_BIT);
+	glEnable(GL_TEXTURE_2D);
+	glDisable(GL_LIGHTING);
 	glDisable(GL_LIGHT0);
-    glEnable(GL_TEXTURE_2D);
-    glDisable(GL_LIGHTING);
-    //glDisable(GL_BLEND);
+    
 	// Center the Skybox around the given x,y,z position
 	x = x - width  / 2;
 	y = y - height / 2;
@@ -206,15 +195,6 @@ void Draw_Skybox(float x, float y, float z, float width, float height, float len
 		glTexCoord2f(0.0f, 0.0f); glVertex3f(x,		  y+height,	z);
 	glEnd();
 
-	// Draw Down side
-	/*glBindTexture(GL_TEXTURE_2D, SkyboxTexture[SKYDOWN]);
-	glBegin(GL_QUADS);		
-		glTexCoord2f(0.0f, 0.0f); glVertex3f(x,		  y,		z);
-		glTexCoord2f(1.0f, 0.0f); glVertex3f(x,		  y,		z+length);
-		glTexCoord2f(1.0f, 1.0f); glVertex3f(x+width, y,		z+length); 
-		glTexCoord2f(0.0f, 1.0f); glVertex3f(x+width, y,		z);
-	glEnd();*/
-    //glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHT0);
 	glEnable(GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);
@@ -681,8 +661,8 @@ void window::displayCallback(void)
 	camera.inverseCamera();
 
 	// CHARACTER
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_LIGHT0);
 	cube.getMatrix().identity();
 	all.getMatrix().setMatrix(cube.getMatrix().rotateY(PI/2));
 	all.getMatrix().setMatrix(all.getMatrix().multiply(camera.getMatrix())); // YOU
@@ -692,14 +672,15 @@ void window::displayCallback(void)
 	cube.drawObj();
 	if (toggle_shader) shader->unbind();
 	drawFPS();
-	glDisable(GL_LIGHT0);
-	glDisable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHTING);
 
 	all.getMatrix().setMatrix(world.getMatrix());
 	glLoadMatrixf(all.getMatrix().getPointer());
 	Draw_Skybox(0,150,0,1000,1000,1000);
-	glCallList(terrainListID);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
 	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
+	glCallList(terrainListID);
 
 	glDisable(GL_LIGHTING);
 	light0.getMatrix().identity();
@@ -724,7 +705,6 @@ void createWorld()
 	Matrix4 m_world = Matrix4();
 	m_world.identity();
 	g_world = new MatrixTransform(id_world, m_world);
-	int i,j;
 	int id = 0;
 	srand(1);
 	while (id < 200) {
@@ -782,7 +762,6 @@ int main(int argc, char *argv[])
 	glutKeyboardUpFunc(keyUp);
 
 	// Initialize cube matrix:
-	m_id.identity();
 	character.getMatrix().identity();
 	all.getMatrix().identity();
 	cube.getMatrix().identity();
@@ -803,11 +782,6 @@ int main(int argc, char *argv[])
 
 	camera.lookAt(p,l,up);
 
-	vf_hnear = 2*tan(fovy/2)*zNear;
-	vf_wnear = vf_hnear*aspect;
-	vf_hfar = 2*tan(fovy/2)*zFar;
-	vf_wfar = vf_hfar*aspect;
-
 	createWorld();
 
 	loadTexture(SkyboxTexture,"desert_front.ppm", SKYFRONT);
@@ -819,9 +793,6 @@ int main(int argc, char *argv[])
 	terrain_helper->terrainLoad(500,500,1);
 	terrain_helper->terrainScale(0, 1);
 	terrainListID = terrain_helper->terrainCreateDL(0,0,0);
-
-	//loadTexture(SkyboxTexture,"desert_down.ppm.jpg", SKYDOWN);
-
 	delete(terrain_helper);
 
 	glutMainLoop();

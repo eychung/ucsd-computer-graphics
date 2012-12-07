@@ -5,6 +5,7 @@
 #include "Enum.h"
 #include "../Matrix4.h"
 #include "../lib/glut-3.7.6-bin/include/GL/glut.h"
+#include <stdio.h>
 
 class Sphere : public Geode {
 	private:

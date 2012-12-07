@@ -200,30 +200,6 @@ void Draw_Skybox(float x, float y, float z, float width, float height, float len
 	glDisable(GL_TEXTURE_2D);
 }
 
-void Cube::drawObj()
-{
-	int i;
-	glBegin(GL_TRIANGLES);
-	for (i=0; i<nIndices; i+=3)
-	{
-		srand(i);
-		double r = rand() % 100 / 100.0;
-		double b = rand() % 100 / 100.0;
-		double g = rand() % 100 / 100.0;
-		glVertex3f(vertices[indices[i]*3],vertices[indices[i]*3+1],vertices[indices[i]*3+2]);
-		glVertex3f(vertices[indices[i+1]*3],vertices[indices[i+1]*3+1],vertices[indices[i+1]*3+2]);
-		glVertex3f(vertices[indices[i+2]*3],vertices[indices[i+2]*3+1],vertices[indices[i+2]*3+2]);
-
-		if (normals != NULL)
-		{
-			glNormal3f(normals[indices[i]*3],normals[indices[i]*3+1],normals[indices[i]*3+2]);
-			glNormal3f(normals[indices[i+1]*3],normals[indices[i+1]*3+1],normals[indices[i+1]*3+2]);
-			glNormal3f(normals[indices[i+2]*3],normals[indices[i+2]*3+1],normals[indices[i+2]*3+2]);
-		}
-	}
-	glEnd();
-}
-
 //-------------------------------------------------------------------------
 //  Draw FPS
 //-------------------------------------------------------------------------
@@ -661,19 +637,27 @@ void window::displayCallback(void)
 	camera.inverseCamera();
 
 	// CHARACTER
-	glDisable(GL_LIGHTING);
-	glDisable(GL_LIGHT0);
+	//glDisable(GL_LIGHTING);
+	//glDisable(GL_LIGHT0);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
 	cube.getMatrix().identity();
 	all.getMatrix().setMatrix(cube.getMatrix().rotateY(PI/2));
 	all.getMatrix().setMatrix(all.getMatrix().multiply(camera.getMatrix())); // YOU
 	glLoadMatrixf(all.getMatrix().getPointer());
 	glColor3f(1.0,1.0,1.0);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
 	if (toggle_shader) shader->bind();
-	cube.drawObj();
+	glutSolidSphere(2,30,30);
+	//cube.drawObj();
 	if (toggle_shader) shader->unbind();
 	drawFPS();
-	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHTING);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_LIGHT0);
+	//glEnable(GL_LIGHT0);
+	//glEnable(GL_LIGHTING);
 
 	all.getMatrix().setMatrix(world.getMatrix());
 	glLoadMatrixf(all.getMatrix().getPointer());
@@ -693,9 +677,9 @@ void window::displayCallback(void)
 	glEnable(GL_LIGHTING);
 
 	// WORLD
-	glDisable(GL_LIGHTING);
-	g_world->draw(world.getMatrix());
 	glEnable(GL_LIGHTING);
+	g_world->draw(world.getMatrix());
+	glDisable(GL_LIGHTING);
 
 	glutSwapBuffers();
 }
@@ -707,10 +691,14 @@ void createWorld()
 	g_world = new MatrixTransform(id_world, m_world);
 	int id = 0;
 	srand(1);
-	while (id < 200) {
-		Geode* mesh_obj = new Sphere(TORSO);
+	while (id < 10) {
+		Geode* mesh_obj = new Sphere(CAR);
 		Matrix4 m_obj = Matrix4();
-		m_obj.setMatrix(m_obj.translate(rand()%300-rand()%300,2,rand()%300-rand()%300));
+		m_obj.setMatrix(m_obj.rotateX((float)rand()/((float)RAND_MAX/(2*PI))));
+		m_obj.setMatrix(m_obj.rotateY((float)rand()/((float)RAND_MAX/(2*PI))));
+		m_obj.setMatrix(m_obj.rotateZ((float)rand()/((float)RAND_MAX/(2*PI))));
+		m_obj.setMatrix(m_obj.scale(5.0,5.0,5.0));
+		m_obj.setMatrix(m_obj.translate(rand()%300-rand()%300,0,rand()%300-rand()%300));
 		char id_obj[] = "hi";
 		Group* mt_obj = new MatrixTransform(id_obj, m_obj);
 		g_world->addNode(mt_obj);
@@ -776,24 +764,26 @@ int main(int argc, char *argv[])
 
 	// Shaders
 	shader = new Shader(toon_vert,toon_frag,true);
-
-	cout << "Loading .obj files" << endl;
-	objReader.readObj("cow.obj", nVerts, &vertices, &normals, &texcoords, nIndices, &indices);
-
 	camera.lookAt(p,l,up);
 
-	createWorld();
+	cout << "Loading .obj files" << endl;
+	objReader.readObj("Moskvitch.obj", nVerts, &vertices, &normals, &texcoords, nIndices, &indices);
 
+	cout << "Loading texture files" << endl;
 	loadTexture(SkyboxTexture,"desert_front.ppm", SKYFRONT);
 	loadTexture(SkyboxTexture,"desert_back.ppm", SKYBACK);
 	loadTexture(SkyboxTexture,"desert_left.ppm", SKYLEFT);
 	loadTexture(SkyboxTexture,"desert_right.ppm", SKYRIGHT);
 	loadTexture(SkyboxTexture,"desert_top.ppm", SKYUP);
 
+	cout << "Generating terrain" << endl;
 	terrain_helper->terrainLoad(500,500,1);
 	terrain_helper->terrainScale(0, 1);
 	terrainListID = terrain_helper->terrainCreateDL(0,0,0);
 	delete(terrain_helper);
+
+	cout << "Creating world" << endl;
+	createWorld();
 
 	glutMainLoop();
 	return 0;

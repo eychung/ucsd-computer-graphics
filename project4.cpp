@@ -62,13 +62,11 @@ GLfloat mat_diffuse[] = {1.0,1.0,1.0,1.0};
 GLfloat mat_specular[]  = {1.0,1.0,1.0,1.0};
 GLfloat mat_shininess[] = {25.0};
 
-float light_pos[] = {-10.0,0.0,-50.0};
-
 GLfloat light0_diffuse[] = { 0.0, 1.0, 0.0, 1.0 };
 GLfloat light0_specular[] = { 1.0, 1.0, 1.0, 1.0 };
 GLfloat light0_shininess[] = {50.0};
-GLfloat light0_position[] = {light_pos[0],light_pos[1],light_pos[2],1.0};
-GLfloat light0_direction[] = {0.0,10.0,-1.0};
+GLfloat light0_position[] = {-50.0,0.0,0.0};
+GLfloat light0_direction[] = {-1.0,-1.0,0.0};
 
 GLfloat zero[] = {0.0,0.0,0.0,0.0};
 
@@ -101,7 +99,7 @@ bool b_arm_right_forward = false;
 bool b_foot_left_forward = true;
 bool b_foot_right_forward = false;
 
-bool debug = false;
+bool debug = true;
 bool once_flag = true;
 bool animate = true;
 bool culling = true;
@@ -447,21 +445,15 @@ void keyDown(unsigned char key, int x, int y) {
 	switch (key)
 	{
 		case 'w':
-			//world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,1.1));
 			keys[W] = true;
 			break;
 		case 's':
-			//world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,-1.1));
 			keys[S] = true;
 			break;
 		case 'a':
-			//rotation.getMatrix().setMatrix(world.getMatrix().rotateY(-0.05));
-			//world.getMatrix().setMatrix(world.getMatrix().multiply(rotation.getMatrix()));
 			keys[A] = true;
 			break;
 		case 'd':
-			//rotation.getMatrix().setMatrix(world.getMatrix().rotateY(0.05));
-			//world.getMatrix().setMatrix(world.getMatrix().multiply(rotation.getMatrix()));
 			keys[D] = true;
 			break;
 		case 'v':
@@ -526,15 +518,12 @@ void keyUp(unsigned char key, int x, int y)
 			keys[W] = false;
 			break;
 		case 's':
-			
 			keys[S] = false;
 			break;
 		case 'a':
-			
 			keys[A] = false;
 			break;
 		case 'd':
-			
 			keys[D] = false;
 			break;
 	}
@@ -692,32 +681,41 @@ void window::displayCallback(void)
 	camera.inverseCamera();
 
 	// CHARACTER
-	glDisable(GL_LIGHTING);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
 	cube.getMatrix().identity();
 	all.getMatrix().setMatrix(cube.getMatrix().rotateY(PI/2));
 	all.getMatrix().setMatrix(all.getMatrix().multiply(camera.getMatrix())); // YOU
 	glLoadMatrixf(all.getMatrix().getPointer());
 	glColor3f(1.0,1.0,1.0);
-	//glutSolidSphere(2.0,20,20);
 	if (toggle_shader) shader->bind();
 	cube.drawObj();
 	if (toggle_shader) shader->unbind();
-	glEnable(GL_LIGHTING);
+	glDisable(GL_LIGHT0);
+	glDisable(GL_LIGHTING);
 
-	cube.getMatrix().identity();
-	all.getMatrix().setMatrix(cube.getMatrix());
-	all.getMatrix().setMatrix(all.getMatrix().multiply(world.getMatrix()));
+	all.getMatrix().setMatrix(world.getMatrix());
 	glLoadMatrixf(all.getMatrix().getPointer());
 	Draw_Skybox(0,150,0,1000,1000,1000);
 	glCallList(terrainListID);
-	
+	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
+
+	glDisable(GL_LIGHTING);
+	light0.getMatrix().identity();
+	light0.getMatrix().setMatrix(light0.getMatrix().translate(light0_position[0],light0_position[1],light0_position[2]));
+	all.getMatrix().setMatrix(light0.getMatrix());
+	all.getMatrix().setMatrix(all.getMatrix().multiply(world.getMatrix()));
+	glLoadMatrixf(all.getMatrix().getPointer());
+	glColor3f(1.0,1.0,1.0);
+	glutSolidSphere(1.0,20,20);
+	glEnable(GL_LIGHTING);
+
 	// WORLD
 	glDisable(GL_LIGHTING);
 	g_world->draw(world.getMatrix());
 	glEnable(GL_LIGHTING);
-	
+
 	glutSwapBuffers();
-	
 }
 
 void createWorld()
@@ -770,7 +768,6 @@ int main(int argc, char *argv[])
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, light0_specular);
 	glLightfv(GL_LIGHT0, GL_SHININESS, light0_shininess);
-	//glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light0_direction);
 	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
 	
 	// Install callback functions:

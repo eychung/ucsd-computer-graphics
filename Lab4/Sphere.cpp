@@ -1,6 +1,7 @@
 #include "Sphere.h"
 
 extern bool culling;
+extern bool debug;
 
 Sphere::Sphere(int id)
 {
@@ -24,6 +25,11 @@ void Sphere::draw(Matrix4 m)
 				glLoadMatrixf(m.getPointer());
 				glColor3d(.8,1.0,0.0);
 				glutSolidCube(1);
+				if (debug)
+				{
+					glColor3d(1.0,0.0,0.0);
+					glutWireSphere(1,8,8);
+				}
 				break;
 			case SHOULDER:
 				glLoadMatrixf(m.getPointer());

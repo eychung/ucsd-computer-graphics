@@ -43,6 +43,7 @@ bool light0Toggle = false;
 bool light1Toggle = false;
 bool toggle_shader = false;
 bool toggle_texture = false;
+bool toggle_view = false;
 
 int shader_state = -1;
 
@@ -439,23 +440,45 @@ void processMotion(int x, int y)
 	}
 }
 
-void processNormalKeys(unsigned char key, int x, int y) {
+bool keys[4]; // wasd
+
+void keyDown(unsigned char key, int x, int y) {
 	Vector3 v;
 	switch (key)
 	{
 		case 'w':
-			world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,1.1));
+			//world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,1.1));
+			keys[W] = true;
 			break;
 		case 's':
-			world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,-1.1));
+			//world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,-1.1));
+			keys[S] = true;
 			break;
 		case 'a':
-			rotation.getMatrix().setMatrix(world.getMatrix().rotateY(-0.05));
-			world.getMatrix().setMatrix(world.getMatrix().multiply(rotation.getMatrix()));
+			//rotation.getMatrix().setMatrix(world.getMatrix().rotateY(-0.05));
+			//world.getMatrix().setMatrix(world.getMatrix().multiply(rotation.getMatrix()));
+			keys[A] = true;
 			break;
 		case 'd':
-			rotation.getMatrix().setMatrix(world.getMatrix().rotateY(0.05));
-			world.getMatrix().setMatrix(world.getMatrix().multiply(rotation.getMatrix()));
+			//rotation.getMatrix().setMatrix(world.getMatrix().rotateY(0.05));
+			//world.getMatrix().setMatrix(world.getMatrix().multiply(rotation.getMatrix()));
+			keys[D] = true;
+			break;
+		case 'v':
+			toggle_view = !toggle_view;
+			if (toggle_view)
+			{
+				v = Vector3(0,0,-5);
+				camera.lookAt(v,l,up);
+				camera.getE().print();
+				camera.getMatrix().print();
+			}
+			else
+			{
+				camera.lookAt(p,l,up);
+				camera.getE().print();
+				camera.getMatrix().print();
+			}
 			break;
 		case '1':
 			light0Toggle = !light0Toggle;
@@ -492,6 +515,50 @@ void processNormalKeys(unsigned char key, int x, int y) {
 			//glDeleteLists(terrainListID, 1);
 			exit(0);
 			break;
+	}
+}
+
+void keyUp(unsigned char key, int x, int y)
+{
+	switch (key)
+	{
+		case 'w':
+			keys[W] = false;
+			break;
+		case 's':
+			
+			keys[S] = false;
+			break;
+		case 'a':
+			
+			keys[A] = false;
+			break;
+		case 'd':
+			
+			keys[D] = false;
+			break;
+	}
+}
+
+void processMovement()
+{
+	if (keys[W])
+	{
+		world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,1.1));
+	}
+	if (keys[S])
+	{
+		world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,-1.1));
+	}
+	if (keys[A])
+	{
+		rotation.getMatrix().setMatrix(world.getMatrix().rotateY(-0.05));
+		world.getMatrix().setMatrix(world.getMatrix().multiply(rotation.getMatrix()));
+	}
+	if (keys[D])
+	{
+		rotation.getMatrix().setMatrix(world.getMatrix().rotateY(0.05));
+		world.getMatrix().setMatrix(world.getMatrix().multiply(rotation.getMatrix()));
 	}
 }
 
@@ -621,6 +688,7 @@ void window::displayCallback(void)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // clear color and depth buffers
 
 	//world.getMatrix().setMatrix(base.getMatrix().multiply(temp.getMatrix()));
+	processMovement();
 	camera.inverseCamera();
 
 	// CHARACTER
@@ -631,7 +699,9 @@ void window::displayCallback(void)
 	glLoadMatrixf(all.getMatrix().getPointer());
 	glColor3f(1.0,1.0,1.0);
 	//glutSolidSphere(2.0,20,20);
+	if (toggle_shader) shader->bind();
 	cube.drawObj();
+	if (toggle_shader) shader->unbind();
 	glEnable(GL_LIGHTING);
 
 	cube.getMatrix().identity();
@@ -658,25 +728,17 @@ void createWorld()
 	int i,j;
 	int id = 0;
 	srand(1);
-	/*for (i=-army_size; i<=army_size; i+=5)
-	{
-		for (j=-army_size; j<=army_size; j+=5)
-		{*/
 	while (id < 200) {
-			//Group* g_robot = createRobot();
-			Geode* mesh_obj = new Sphere(TORSO);
-			Matrix4 m_obj = Matrix4();
-			m_obj.setMatrix(m_obj.translate(rand()%300-rand()%300,0,rand()%300-rand()%300));
-			char id_obj[] = "hi";
-			Group* mt_obj = new MatrixTransform(id_obj, m_obj);
-			g_world->addNode(mt_obj);
-			mt_obj->addNode(mesh_obj);
-			id+=1;
+		Geode* mesh_obj = new Sphere(TORSO);
+		Matrix4 m_obj = Matrix4();
+		m_obj.setMatrix(m_obj.translate(rand()%300-rand()%300,2,rand()%300-rand()%300));
+		char id_obj[] = "hi";
+		Group* mt_obj = new MatrixTransform(id_obj, m_obj);
+		g_world->addNode(mt_obj);
+		mt_obj->addNode(mesh_obj);
+		id+=1;
 	}
-		/*}
-	}*/
 }
-
 
 
 int main(int argc, char *argv[])
@@ -718,7 +780,8 @@ int main(int argc, char *argv[])
 
 	glutMouseFunc(processMouse);
 	glutMotionFunc(processMotion);
-	glutKeyboardFunc(processNormalKeys);
+	glutKeyboardFunc(keyDown);
+	glutKeyboardUpFunc(keyUp);
 
 	// Initialize cube matrix:
 	m_id.identity();
@@ -737,9 +800,7 @@ int main(int argc, char *argv[])
 	// Shaders
 	shader = new Shader(toon_vert,toon_frag,true);
 
-	/*cout << "Loading dragon_smooth.obj" << endl;
-	objReader.readObj("car.obj", nVerts, &vertices, &normals, &texcoords, nIndices, &indices);
-	cout << "done loading" << endl;*/
+	cout << "Loading .obj files" << endl;
 	objReader.readObj("cow.obj", nVerts, &vertices, &normals, &texcoords, nIndices, &indices);
 
 	camera.lookAt(p,l,up);

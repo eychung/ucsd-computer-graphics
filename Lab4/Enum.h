@@ -3,5 +3,6 @@
 
 enum { TORSO, HEAD, SHOULDER, LEG, ARM, FOOT };
 enum { FTL, FTR, FBL, FBR, NTL, NTR, NBL, NBR };
+enum { W, A, S, D };
 
 #endif

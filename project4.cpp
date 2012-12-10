@@ -95,6 +95,30 @@ bool is_fullscreen = false;
 TerrainHelper * terrain_helper = new TerrainHelper();
 int terrainListID;
 
+const int MAX_PARTICLES = 500;
+
+typedef struct
+{
+	float Xsrc;
+	float Ysrc;
+	float Zsrc;
+	float Xpos;
+	float Ypos;
+	float Zpos;
+	float Xmov;
+	float Zmov;
+	float Red;
+	float Green;
+	float Blue;
+	float Direction;
+	float Acceleration;
+	float Deceleration;
+	float Scalez;
+	bool Visible;
+}PARTICLES;
+
+PARTICLES particle[MAX_PARTICLES];
+
 // FPS
 GLvoid *font_style = GLUT_BITMAP_8_BY_13;
 void printw (float x, float y, float z, char* format, ...);
@@ -111,6 +135,121 @@ Cube::Cube()
 Matrix4& Cube::getMatrix()
 {
 	return matrix;
+}
+
+void initParticles(float xsrc, float ysrc, float zsrc)
+{
+	for (int i = 0; i < MAX_PARTICLES; ++i)
+	{
+		particle[i].Xsrc = xsrc;
+		particle[i].Ysrc = ysrc;
+		particle[i].Zsrc = zsrc;
+		particle[i].Xpos = xsrc;
+		particle[i].Ypos = ysrc + 5;
+		particle[i].Zpos = zsrc;
+		//Set the amount of movement on the X axis to a random number, we dont want
+		//all our particles doing the same thing  
+		particle[i].Xmov = (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1) * rand()%11) + 1) * 0.005) - (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1) * rand()%11) + 1) * 0.005);
+		//Set the amount of movement on the Z axis to a random number, as above, we dont
+		//want all our particles doing the same thing  
+		particle[i].Zmov = (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1) * rand()%11) + 1) * 0.005) - (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1) * rand()%11) + 1) * 0.005);
+		//Set the amount of Red to 1
+		particle[i].Red = 1;
+		//Set the amount of Green to 1
+		particle[i].Green = 1;
+		//Set the amount of Blue to 1
+		particle[i].Blue = 1;
+		//Scale the particle to 1 quarter of its original size
+		particle[i].Scalez = 0.25;
+		//Set the initial rotation angle to 0
+		particle[i].Direction = 0;
+		//Set the amount of acceleration to a random number so they climb to different
+		//heights
+		particle[i].Acceleration = ((((((8 - 5 + 2) * rand()%11) + 5) - 1 + 1) * rand()%11) + 1) * 0.02;
+		//Decrease their acceleration by 0.0025. They will slow down at a constant
+		//rate but you will not see a difference
+		particle[i].Deceleration = 0.0025;
+	}
+}
+
+void updateParticles()
+{
+	for (int i = 0; i < MAX_PARTICLES; ++i)
+	{
+		//Set the color of the current particle
+		glColor3f (particle[i].Red, particle[i].Green, particle[i].Blue);
+
+		//Move the particle on the Y axes, adding on the amount of acceleration
+		//and then subtracting the rate of deceleration
+		particle[i].Ypos = particle[i].Ypos + particle[i].Acceleration - particle[i].Deceleration;
+		//Increase the deceleration rate so the particle falls gaining speed
+		particle[i].Deceleration = particle[i].Deceleration + 0.0025;
+
+		//Move the particle on the X axis
+		particle[i].Xpos = particle[i].Xpos + particle[i].Xmov;
+		//Move the particle on the Z axis
+		particle[i].Zpos = particle[i].Zpos + particle[i].Zmov;
+
+		//Rotate the particle
+		particle[i].Direction = particle[i].Direction + ((((((int)(0.5 - 0.1 + 0.1) * rand()%11) + 1) - 1 + 1) * rand()%11) + 1);
+
+		//Now here I am saying that if the particle goes beneath its initial height
+		//which I set earlier to -5, then it will restart the particle changing some
+		//of the variables.
+		if (particle[i].Ypos < -5)
+		{
+			particle[i].Xpos = particle[i].Xsrc;
+			particle[i].Ypos = particle[i].Ysrc;
+			particle[i].Zpos = particle[i].Zsrc;
+			particle[i].Red = 1;
+			particle[i].Green = 1;
+			particle[i].Blue = 1;
+			//Set the angle of rotation
+			particle[i].Direction = 0;
+			//Adjust the Acceleration rate to another random number
+			particle[i].Acceleration = ((((((8 - 5 + 2) * rand()%11) + 5) - 1 + 1) * rand()%11) + 1) * 0.02;
+			//Reset the Deceleration rate
+			particle[i].Deceleration = 0.0025;
+		}
+	}
+}
+
+void drawParticles()
+{
+	for (int i = 0; i < MAX_PARTICLES; ++i)
+	{
+		//Distinguish the start of our current particle, we do not wish for them
+		//all to be affected by the ones prior
+		glPushMatrix();
+
+		//Translate the particle on the X, Y and Z axis accordingly
+		glTranslatef (particle[i].Xpos, particle[i].Ypos, particle[i].Zpos);
+
+		//Rotate the particle
+		glRotatef (particle[i].Direction - 90, 0, 0, 1);
+		//Scale the particle
+		glScalef (particle[i].Scalez, particle[i].Scalez, particle[i].Scalez);
+
+		glColor3f(particle[i].Red, particle[i].Green, particle[i].Blue);
+
+		//Disable Depth Testing so our masking appears as one
+		glDisable (GL_DEPTH_TEST);
+
+		//Draw the shape
+
+		glBegin (GL_QUADS);
+		glVertex3f (-1, -1, 0);
+		glVertex3f (1, -1, 0);
+		glVertex3f (1, 1, 0);
+		glVertex3f (-1, 1, 0);
+		glEnd();
+
+		//Re-enable Depth Testing
+		glEnable(GL_DEPTH_TEST);
+
+		//End the changes to the current object
+		glPopMatrix();
+	}
 }
 
 void Draw_Skybox(float x, float y, float z, float width, float height, float length)
@@ -635,12 +774,8 @@ void drawCharacter()
 void window::displayCallback(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // clear color and depth buffers
-	
-	if (toggle_shader) shader->bind();
-	glutSolidSphere(2,30,30);
-	if (toggle_shader) shader->unbind();
 
-	/*processMovement();
+	processMovement();
 	camera.inverseCamera();
 	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
 	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
@@ -677,12 +812,16 @@ void window::displayCallback(void)
 	glutSolidSphere(1.0,20,20);
 	glEnable(GL_LIGHTING);
 
+	glLoadIdentity();
+	updateParticles();
+	drawParticles();
+
 	// WORLD
 	glEnable(GL_LIGHTING);
 	if (toggle_shader) shader->bind();
 	g_world->draw(world.getMatrix());
 	if (toggle_shader) shader->unbind();
-	glDisable(GL_LIGHTING);*/
+	glDisable(GL_LIGHTING);
 
 	glutSwapBuffers();
 }
@@ -770,7 +909,7 @@ int main(int argc, char *argv[])
 	camera.lookAt(p,l,up);
 
 	cout << "Loading .obj files" << endl;
-	objReader.readObj("Moskvitch.obj", nVerts, &vertices, &normals, &texcoords, nIndices, &indices);
+	objReader.readObj("cow.obj", nVerts, &vertices, &normals, &texcoords, nIndices, &indices);
 
 	cout << "Loading texture files" << endl;
 	loadTexture(texture_array,"desert_front.ppm", SKYFRONT);
@@ -788,6 +927,9 @@ int main(int argc, char *argv[])
 
 	cout << "Creating world" << endl;
 	createWorld();
+
+	cout << "initializing particles" << endl;
+	initParticles(0.0, 0.0, 0.0);
 
 	glutMainLoop();
 	return 0;

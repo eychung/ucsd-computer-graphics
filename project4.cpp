@@ -600,16 +600,51 @@ void window::reshapeCallback(int w, int h)
 	glMatrixMode(GL_MODELVIEW);
 }
 
+void drawCharacter()
+{
+	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse_car);
+	glColor3f(1.0,1.0,1.0);
+	glBegin(GL_TRIANGLES);
+	for (int i=0; i<nIndices; i+=3)
+	{
+		glVertex3f(vertices[indices[i]*3],vertices[indices[i]*3+1],vertices[indices[i]*3+2]);
+		glVertex3f(vertices[indices[i+1]*3],vertices[indices[i+1]*3+1],vertices[indices[i+1]*3+2]);
+		glVertex3f(vertices[indices[i+2]*3],vertices[indices[i+2]*3+1],vertices[indices[i+2]*3+2]);
+
+		if (normals != NULL)
+		{
+			glNormal3f(normals[indices[i]*3],normals[indices[i]*3+1],normals[indices[i]*3+2]);
+			glNormal3f(normals[indices[i+1]*3],normals[indices[i+1]*3+1],normals[indices[i+1]*3+2]);
+			glNormal3f(normals[indices[i+2]*3],normals[indices[i+2]*3+1],normals[indices[i+2]*3+2]);
+		}
+		if (texcoords != NULL)
+		{
+			glTexCoord3f(texcoords[indices[i]*3],texcoords[indices[i]*3+1],texcoords[indices[i]*3+2]);
+			glTexCoord3f(texcoords[indices[i+1]*3],texcoords[indices[i+1]*3+1],texcoords[indices[i+1]*3+2]);
+			glTexCoord3f(texcoords[indices[i+2]*3],texcoords[indices[i+2]*3+1],texcoords[indices[i+2]*3+2]);
+		}
+	}
+	glEnd();
+}
+
 //----------------------------------------------------------------------------
 // Callback method called when window readraw is necessary or
 // when glutPostRedisplay() was called.
 void window::displayCallback(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // clear color and depth buffers
+	
+	if (toggle_shader) shader->bind();
+	glutSolidSphere(2,30,30);
+	if (toggle_shader) shader->unbind();
 
-	//world.getMatrix().setMatrix(base.getMatrix().multiply(temp.getMatrix()));
-	processMovement();
+	/*processMovement();
 	camera.inverseCamera();
+	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse_character);
 
 	// CHARACTER
 	glEnable(GL_LIGHTING);
@@ -618,10 +653,7 @@ void window::displayCallback(void)
 	all.getMatrix().setMatrix(cube.getMatrix().rotateY(PI/2));
 	all.getMatrix().setMatrix(all.getMatrix().multiply(camera.getMatrix())); // YOU
 	glLoadMatrixf(all.getMatrix().getPointer());
-	glColor3f(1.0,1.0,1.0);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
-	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse_character);
+	glColor3f(0.0,0.0,1.0);
 	if (toggle_shader) shader->bind();
 	glutSolidSphere(2,30,30);
 	if (toggle_shader) shader->unbind();
@@ -634,7 +666,6 @@ void window::displayCallback(void)
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
 	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
 	glCallList(terrainListID);
-	
 
 	glDisable(GL_LIGHTING);
 	light0.getMatrix().identity();
@@ -648,8 +679,10 @@ void window::displayCallback(void)
 
 	// WORLD
 	glEnable(GL_LIGHTING);
+	if (toggle_shader) shader->bind();
 	g_world->draw(world.getMatrix());
-	glDisable(GL_LIGHTING);
+	if (toggle_shader) shader->unbind();
+	glDisable(GL_LIGHTING);*/
 
 	glutSwapBuffers();
 }
@@ -662,7 +695,7 @@ void createWorld()
 	int id = 0;
 	srand(1);
 	while (id < 10) {
-		Geode* mesh_obj = new Sphere(CAR);
+		Geode* mesh_obj = new Sphere(HEAD);
 		Matrix4 m_obj = Matrix4();
 		m_obj.setMatrix(m_obj.rotateX((float)rand()/((float)RAND_MAX/(2*PI))));
 		m_obj.setMatrix(m_obj.rotateY((float)rand()/((float)RAND_MAX/(2*PI))));

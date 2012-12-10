@@ -51,6 +51,8 @@ void drawObj()
 }
 
 
+extern bool toggle_shader;
+
 void Sphere::draw(Matrix4 m)
 {
 	glMatrixMode(GL_MODELVIEW);
@@ -65,8 +67,13 @@ void Sphere::draw(Matrix4 m)
 				break;
 			case HEAD:
 				glLoadMatrixf(m.getPointer());
-				glColor3d(1.0,.8,.4);
+				glColor3d(.8,1.0,0.0);
 				glutSolidTeapot(1);
+				if (debug)
+				{
+					glColor3d(1.0,0.0,0.0);
+					glutWireSphere(2,8,8);
+				}
 				break;
 			case TORSO:
 				glLoadMatrixf(m.getPointer());

@@ -509,11 +509,21 @@ void processMotion(int x, int y)
 }
 
 bool keys[4]; // wasd
+bool jump = false;
+float j_start = -1.5;
+float j_x;
 
 void keyDown(unsigned char key, int x, int y) {
 	Vector3 v;
 	switch (key)
 	{
+		case ' ':
+			if (!jump)
+			{
+				j_x = j_start;
+				jump = true;
+			}
+			break;
 		case 'w':
 			keys[W] = true;
 			break;
@@ -601,6 +611,7 @@ void keyUp(unsigned char key, int x, int y)
 
 void processMovement()
 {
+	float y;
 	if (keys[W])
 	{
 		world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,1.1));
@@ -618,6 +629,17 @@ void processMovement()
 	{
 		rotation.getMatrix().setMatrix(world.getMatrix().rotateY(0.05));
 		world.getMatrix().setMatrix(world.getMatrix().multiply(rotation.getMatrix()));
+	}
+	if (jump)
+	{
+		j_x += 0.1;
+		y = -(j_x*j_x);
+		if (j_x >= 0) y = y*-1;
+
+		if (j_x > -j_start)
+			jump = false;
+		else
+			world.getMatrix().setMatrix(world.getMatrix().translate(0.0,y,0.0));
 	}
 }
 

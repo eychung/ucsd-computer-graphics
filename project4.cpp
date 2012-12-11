@@ -43,6 +43,7 @@ bool light0Toggle = false;
 bool light1Toggle = false;
 bool toggle_shader = false;
 bool toggle_texture = false;
+bool toggle_run = false;
 bool toggle_view = false;
 
 int shader_state = -1;
@@ -560,8 +561,9 @@ void keyDown(unsigned char key, int x, int y) {
 				glDisable(GL_LIGHT0);
 			break;
 		case 'r':
-			//base.getMatrix().identity();
-			//temp.getMatrix().identity();
+			toggle_run = !toggle_run;
+			break;
+		case 'p':
 			world.getMatrix().identity();
 			break;
 		case 'h':
@@ -612,13 +614,32 @@ void keyUp(unsigned char key, int x, int y)
 void processMovement()
 {
 	float y;
-	if (keys[W])
+	if (!toggle_run)
 	{
-		world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,1.1));
+		if (keys[W])
+		{
+			world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,1.1));
+		}
+		if (keys[S])
+		{
+			world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,-1.1));
+		}
 	}
-	if (keys[S])
+	else
 	{
-		world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,-1.1));
+		if (keys[W])
+		{
+			world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,1.1));
+			toggle_run = false;
+		}
+		if (keys[S])
+		{
+			world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,-1.1));
+			toggle_run = false;
+		}
+		else {
+			world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,1.1));
+		}
 	}
 	if (keys[A])
 	{

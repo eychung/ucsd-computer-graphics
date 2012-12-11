@@ -5,6 +5,7 @@
 #include <windowsx.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
 
 #include "Geode.h"
 #include "Enum.h"

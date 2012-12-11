@@ -81,9 +81,7 @@ Group * g_world;
 bool debug = true;
 bool once_flag = true;
 bool animate = true;
-bool culling = true;
-
-float frustum[6][4];
+bool culling = false;
 
 Vector3 p = Vector3(0,0,5);
 Vector3 l = Vector3(0,0,0);
@@ -835,6 +833,8 @@ void window::displayCallback(void)
 	if (toggle_shader) shader->bind();
 	glutSolidSphere(2,30,30);
 	if (toggle_shader) shader->unbind();
+	glColor3f(1.0,0.0,0.0);
+	glutWireSphere(2.2,30,30);
 	drawFPS();
 	glDisable(GL_LIGHTING);
 	glDisable(GL_LIGHT0);
@@ -855,9 +855,9 @@ void window::displayCallback(void)
 	glutSolidSphere(1.0,20,20);
 	glEnable(GL_LIGHTING);
 
-	glLoadIdentity();
+	/*glLoadIdentity();
 	updateParticles();
-	drawParticles();
+	drawParticles();*/
 
 	// WORLD
 	glEnable(GL_LIGHTING);
@@ -876,14 +876,19 @@ void createWorld()
 	g_world = new MatrixTransform(id_world, m_world);
 	int id = 0;
 	srand(1);
-	while (id < 10) {
+	float c_x,c_y,c_z;
+	while (id < 20) {
 		Geode* mesh_obj = new Sphere(HEAD);
+		c_x = rand()%300-rand()%300;
+		c_y = 0;
+		c_z = rand()%300-rand()%300;
+		mesh_obj->setPos(c_x,c_y,c_z);
 		Matrix4 m_obj = Matrix4();
 		m_obj.setMatrix(m_obj.rotateX((float)rand()/((float)RAND_MAX/(2*PI))));
 		m_obj.setMatrix(m_obj.rotateY((float)rand()/((float)RAND_MAX/(2*PI))));
 		m_obj.setMatrix(m_obj.rotateZ((float)rand()/((float)RAND_MAX/(2*PI))));
 		m_obj.setMatrix(m_obj.scale(5.0,5.0,5.0));
-		m_obj.setMatrix(m_obj.translate(rand()%300-rand()%300,0,rand()%300-rand()%300));
+		m_obj.setMatrix(m_obj.translate(c_x,c_y,c_z));
 		char id_obj[] = "hi";
 		Group* mt_obj = new MatrixTransform(id_obj, m_obj);
 		g_world->addNode(mt_obj);

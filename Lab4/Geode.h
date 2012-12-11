@@ -2,12 +2,15 @@
 #ifndef _GEODE_H_
 #define _GEODE_H_
 
+#include <windows.h>
+#include <windowsx.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "Node.h"
 #include "../Vector3.h"
 #include "Enum.h"
 #include "../Matrix4.h"
-
-extern float frustum[6][4];
 
 class Geode : public Node {
 	protected:
@@ -16,30 +19,28 @@ class Geode : public Node {
 		float centerZ;
 		float radius;
 	public:
-		float getCenterX() { return centerX; }
-		float getCenterY() { return centerX; }
-		float getCenterZ() { return centerX; }
-		float getRadius() { return radius; }
-		void getBoundingSphere(int id, Matrix4 m)
+		void setPos(float x, float y, float z)
 		{
-			if (id != FOOT)
-			{
-				radius = 1;
-			}
-			else {
-				radius = .25;
-			}
-			centerX = *(m.getPointer() + 12);
-			centerY = *(m.getPointer() + 13);
-			centerZ = *(m.getPointer() + 14);
+			centerX = x;
+			centerY = y;
+			centerZ = z;
 		}
-		bool sphereInFrustum(float x, float y, float z, float radius)
+
+		float getCenterX() { return centerX; }
+		float getCenterY() { return centerY; }
+		float getCenterZ() { return centerZ; }
+		float getRadius() { return radius; }
+
+		bool intersectCharacter(Matrix4 m)
 		{
-			int p;
-			for (p=0; p<6; p++)
-			if (frustum[p][0]*x + frustum[p][1]*y + frustum[p][2]*z + frustum[p][3] <= -radius)
-				return false;
-			return true;
+			float c_x = *(m.getPointer() + 12);
+			float c_y = *(m.getPointer() + 13);
+			float c_z = *(m.getPointer() + 14);
+			if (11 > c_x && -11 < c_x &&
+				11 > c_y && -11 < c_y &&
+				11 > c_z && -11 < c_z) 
+				return true;
+			return false;
 		}
 		virtual void draw(Matrix4 m) = 0;
 };

@@ -37,7 +37,7 @@ class Geode : public Node {
 			float c_y = *(m.getPointer() + 13);
 			float c_z = *(m.getPointer() + 14);
 			if (11 > c_x && -11 < c_x &&
-				11 > c_y && -11 < c_y &&
+				8 > c_y && -8 < c_y &&
 				11 > c_z && -11 < c_z) 
 				return true;
 			return false;

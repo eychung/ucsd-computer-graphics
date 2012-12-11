@@ -78,7 +78,7 @@ int window::height = 512;   // set window height in pixels here
 
 Group * g_world;
 
-bool debug = true;
+bool debug = false;
 bool once_flag = true;
 bool animate = true;
 bool culling = false;
@@ -87,8 +87,6 @@ Vector3 p = Vector3(0,0,5);
 Vector3 l = Vector3(0,0,0);
 Vector3 up = Vector3(0,1,0);
 Vector3 d = Vector3(0,0,1);
-
-float interval = 0.02;
 
 bool is_fullscreen = false;
 TerrainHelper * terrain_helper = new TerrainHelper();
@@ -581,6 +579,9 @@ void keyDown(unsigned char key, int x, int y) {
 			else
 				glutReshapeWindow(512, 512);
 			break;
+		case 'u':
+			debug = !debug;
+			break;
 		case 27:
 			//if (shader)
 			//	delete shader;
@@ -809,6 +810,8 @@ void drawCharacter()
 	glEnd();
 }
 
+bool collision = false;
+
 //----------------------------------------------------------------------------
 // Callback method called when window readraw is necessary or
 // when glutPostRedisplay() was called.
@@ -833,8 +836,11 @@ void window::displayCallback(void)
 	if (toggle_shader) shader->bind();
 	glutSolidSphere(2,30,30);
 	if (toggle_shader) shader->unbind();
-	glColor3f(1.0,0.0,0.0);
-	glutWireSphere(2.2,30,30);
+	if (debug)
+	{
+		glColor3f(1.0,0.0,0.0);
+		glutWireSphere(2.2,30,30);
+	}
 	drawFPS();
 	glDisable(GL_LIGHTING);
 	glDisable(GL_LIGHT0);
@@ -855,10 +861,6 @@ void window::displayCallback(void)
 	glutSolidSphere(1.0,20,20);
 	glEnable(GL_LIGHTING);
 
-	/*glLoadIdentity();
-	updateParticles();
-	drawParticles();*/
-
 	// WORLD
 	glEnable(GL_LIGHTING);
 	if (toggle_shader) shader->bind();
@@ -877,7 +879,7 @@ void createWorld()
 	int id = 0;
 	srand(1);
 	float c_x,c_y,c_z;
-	while (id < 20) {
+	while (id < 15) {
 		Geode* mesh_obj = new Sphere(HEAD);
 		c_x = rand()%300-rand()%300;
 		c_y = 0;
@@ -977,7 +979,7 @@ int main(int argc, char *argv[])
 	createWorld();
 
 	cout << "initializing particles" << endl;
-	initParticles(0.0, 0.0, 0.0);
+	//initParticles(0.0,0.0,0.0);
 
 	glutMainLoop();
 	return 0;

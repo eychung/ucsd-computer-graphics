@@ -10,6 +10,11 @@ extern float * texcoords;
 extern int nIndices;
 extern int * indices;
 
+extern bool toggle_shader;
+extern void initParticles(float xsrc, float ysrc, float zsrc);
+extern void updateParticles();
+extern void drawParticles();
+
 using namespace std;
 
 Sphere::Sphere(int id)
@@ -52,24 +57,41 @@ void drawObj()
 	glEnd();
 }
 
-
-extern bool toggle_shader;
-extern Matrix4 m_world;
+bool do_once = true;
 
 void Sphere::draw(Matrix4 m)
 {
 	glMatrixMode(GL_MODELVIEW);
-	
+
 	if (intersectCharacter(m))
+	{
+		cout << do_once << endl;
+		if (do_once)
+		{
+			initParticles(*(m.getPointer() + 12),*(m.getPointer() + 13)+5.0,*(m.getPointer() + 14));
+			cout << "init" << endl; 
+			do_once = false;
+		}
 		glColor3d(1.0,0.0,0.0);
+	}
 	else
+	{
 		glColor3d(0.8,1.0,0.0);
+		do_once = true;
+	}
 
 	switch (this->id)
 	{
 		case HEAD:
 			glLoadMatrixf(m.getPointer());
 			glutSolidTeapot(1);
+			if (intersectCharacter(m))
+			{
+				cout << "drawing" << endl;
+				glLoadIdentity();
+				updateParticles();
+				drawParticles();
+			}
 			break;
 		case TORSO:
 			glLoadMatrixf(m.getPointer());
@@ -77,7 +99,7 @@ void Sphere::draw(Matrix4 m)
 			break;
 	}
 
-	if (debug)
+	/*if (debug)
 	{
 		switch (this->id)
 		{
@@ -90,5 +112,5 @@ void Sphere::draw(Matrix4 m)
 				glutWireSphere(1,8,8);
 				break;
 		}
-	}
+	}*/
 }

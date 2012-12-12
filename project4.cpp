@@ -89,9 +89,6 @@ Vector3 up = Vector3(0,1,0);
 Vector3 d = Vector3(0,0,1);
 
 bool is_fullscreen = false;
-TerrainHelper * terrain_helper = new TerrainHelper();
-int terrainListID;
-
 const int MAX_PARTICLES = 500;
 
 typedef struct
@@ -115,6 +112,14 @@ typedef struct
 }PARTICLES;
 
 PARTICLES particle[MAX_PARTICLES];
+int TERRAIN_ONE_ID;
+int TERRAIN_TWO_ID;
+int TERRAIN_THREE_ID;
+int CURRENT_TERRAIN_ID;
+int CURRENT_TERRAIN_HEIGHT = 2;
+const float TERRAIN_ONE_HEIGHT = 1.0;
+const float TERRAIN_TWO_HEIGHT = 1.5;
+const float TERRAIN_THREE_HEIGHT = 2.0;
 
 // FPS
 GLvoid *font_style = GLUT_BITMAP_8_BY_13;
@@ -549,13 +554,13 @@ void keyDown(unsigned char key, int x, int y) {
 				camera.getMatrix().print();
 			}
 			break;
-		case '1':
+		/*case '1':
 			light0Toggle = !light0Toggle;
 			if (light0Toggle)
 				glEnable(GL_LIGHT0);
 			else
 				glDisable(GL_LIGHT0);
-			break;
+			break;*/
 		case 'r':
 			toggle_run = !toggle_run;
 			break;
@@ -581,6 +586,18 @@ void keyDown(unsigned char key, int x, int y) {
 			break;
 		case 'u':
 			debug = !debug;
+			break;
+		case '1':
+			CURRENT_TERRAIN_ID = TERRAIN_ONE_ID;
+			//CURRENT_TERRAIN_HEIGHT = 2;
+			break;
+		case '2':
+			CURRENT_TERRAIN_ID = TERRAIN_TWO_ID;
+			//CURRENT_TERRAIN_HEIGHT = 2;
+			break;
+		case '3':
+			CURRENT_TERRAIN_ID = TERRAIN_THREE_ID;
+			//CURRENT_TERRAIN_HEIGHT = 2;
 			break;
 		case 27:
 			//if (shader)
@@ -846,10 +863,13 @@ void window::displayCallback(void)
 	glDisable(GL_LIGHT0);
 
 	glLoadMatrixf(world.getMatrix().getPointer());
-	Draw_Skybox(0,150,0,1000,1000,1000);
+	Draw_Skybox(0,150,0,800,800,800);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
 	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
-	glCallList(terrainListID);
+	glPushMatrix();
+	glTranslatef(0, -CURRENT_TERRAIN_HEIGHT, 0);
+	glCallList(CURRENT_TERRAIN_ID);
+	glPopMatrix();
 
 	glDisable(GL_LIGHTING);
 	light0.getMatrix().identity();
@@ -969,16 +989,30 @@ int main(int argc, char *argv[])
 	loadTexture(texture_array,"desert_top.ppm", SKYUP);
 	loadTexture(texture_array,"rust.ppm", 5);
 
-	cout << "Generating terrain" << endl;
-	terrain_helper->terrainLoad(500,500,1);
-	terrain_helper->terrainScale(0, 1);
-	terrainListID = terrain_helper->terrainCreateDL(0,0,0);
-	delete(terrain_helper);
+	cout << "Generating terrain1" << endl;
+	TerrainHelper th1;
+	th1.terrainLoad(800,800,1);
+	th1.terrainScale(0,TERRAIN_ONE_HEIGHT);
+	TERRAIN_ONE_ID = th1.terrainCreateDL(0,0,0);
+
+	cout << "Generating terrain2" << endl;
+	TerrainHelper th2;
+	th2.terrainLoad(800,800,1);
+	th2.terrainScale(0, TERRAIN_TWO_HEIGHT);
+	TERRAIN_TWO_ID = th2.terrainCreateDL(0,0,0);
+
+	cout << "Generating terrain3" << endl;
+	TerrainHelper th3;
+	th3.terrainLoad(800, 800,1);
+	th3.terrainScale(0,TERRAIN_THREE_HEIGHT);
+	TERRAIN_THREE_ID = th3.terrainCreateDL(0,0,0);
+
+	CURRENT_TERRAIN_ID = TERRAIN_ONE_ID;
 
 	cout << "Creating world" << endl;
 	createWorld();
 
-	cout << "initializing particles" << endl;
+	//cout << "initializing particles" << endl;
 	//initParticles(0.0,0.0,0.0);
 
 	glutMainLoop();

@@ -524,31 +524,33 @@ void selectRandomPath()
 	{
 		rage_path = rand()%5;
 		rage_count += 1;
+		world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,2.5));
 	}
 	else // continue executing code
 	{
 		rage_count++;
-		if (rage_count < 10)
+		if (rage_count < 20)
 		{
 			if (rage_path == 0 || rage_path == 1)
 			{
-				world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,2.1));
-				rotation.getMatrix().setMatrix(world.getMatrix().rotateY(-0.05));
+				world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,2.5));
+				rotation.getMatrix().setMatrix(world.getMatrix().rotateY(-0.07));
 				world.getMatrix().setMatrix(world.getMatrix().multiply(rotation.getMatrix()));
 			}
 			else if (rage_path == 2 || rage_path == 3)
 			{
-				world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,2.1));
-				rotation.getMatrix().setMatrix(world.getMatrix().rotateY(0.05));
+				world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,2.5));
+				rotation.getMatrix().setMatrix(world.getMatrix().rotateY(0.07));
 				world.getMatrix().setMatrix(world.getMatrix().multiply(rotation.getMatrix()));
 			}
 			else
 			{
-				world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,3.5));
+				world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,2.5));
 			}
 		}
 		else
 		{
+			world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,2.5));
 			rage_count = 0;
 		}
 	}

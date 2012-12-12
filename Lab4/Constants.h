@@ -5,7 +5,7 @@
 
 static char id_world[] = "id_world";
 static char id_torso[] = "id_torso";
-static char id_head[] = "id_head";
+static char id_SIZE1[] = "id_SIZE1";
 static char id_shoulder_left[] = "id_shoulder_left";
 static char id_shoulder_right[] = "id_shoulder_right";
 static char id_leg_left[] = "id_leg_left";

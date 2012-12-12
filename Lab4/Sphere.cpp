@@ -15,17 +15,19 @@ extern void initParticles(float xsrc, float ysrc, float zsrc);
 extern void updateParticles();
 extern void drawParticles();
 
+GLfloat light_diffuse[] = {1.0,0.0,0.0,1.0};
+extern GLfloat mat_specular[];
+extern GLfloat mat_shininess[];
+extern GLfloat mat_diffuse_car[];
+
+static bool do_once = true;
+
 using namespace std;
 
 Sphere::Sphere(int id)
 {
 	this->id = id;
 }
-
-GLfloat light_diffuse[] = {1.0,0.0,0.0,1.0};
-extern GLfloat mat_specular[];
-extern GLfloat mat_shininess[];
-extern GLfloat mat_diffuse_car[];
 
 void drawObj()
 {
@@ -57,7 +59,52 @@ void drawObj()
 	glEnd();
 }
 
-bool do_once = true;
+void drawBoundingBox()
+{
+	glBegin(GL_LINE_STRIP);
+	// Draw front face:
+	glNormal3f(0.0, 0.0, 1.0);   
+	glVertex3f(-1.5,  0.8,  1.0);
+	glVertex3f( 1.7,  0.8,  1.0);
+	glVertex3f( 1.7, -0.8,  1.0);
+	glVertex3f(-1.5, -0.8,  1.0);
+
+	// Draw left side:
+	glNormal3f(-1.0, 0.0, 0.0);
+	glVertex3f(-1.5,  0.8,  1.0);
+	glVertex3f(-1.5,  0.8, -1.0);
+	glVertex3f(-1.5, -0.8, -1.0);
+	glVertex3f(-1.5, -0.8,  1.0);
+
+	// Draw right side:
+	glNormal3f(1.0, 0.0, 0.0);
+	glVertex3f( 1.7,  0.8,  1.0);
+	glVertex3f( 1.7,  0.8, -1.0);
+	glVertex3f( 1.7, -0.8, -1.0);
+	glVertex3f( 1.7, -0.8,  1.0);
+
+	// Draw back face:
+	glNormal3f(0.0, 0.0, -1.0);
+	glVertex3f(-1.5,  0.8, -1.0);
+	glVertex3f( 1.7,  0.8, -1.0);
+	glVertex3f( 1.7, -0.8, -1.0);
+	glVertex3f(-1.5, -0.8, -1.0);
+
+	// Draw top side:
+	glNormal3f(0.0, 1.0, 0.0);
+	glVertex3f(-1.5,  0.8,  1.0);
+	glVertex3f( 1.7,  0.8,  1.0);
+	glVertex3f( 1.7,  0.8, -1.0);
+	glVertex3f(-1.5,  0.8, -1.0);
+
+	// Draw bottom side:
+	glNormal3f(0.0, -1.0, 0.0);
+	glVertex3f(-1.5, -0.8, -1.0);
+	glVertex3f( 1.7, -0.8, -1.0);
+	glVertex3f( 1.7, -0.8,  1.0);
+	glVertex3f(-1.5, -0.8,  1.0);
+	glEnd();
+}
 
 void Sphere::draw(Matrix4 m)
 {
@@ -80,37 +127,20 @@ void Sphere::draw(Matrix4 m)
 		do_once = true;
 	}
 
-	switch (this->id)
+	glLoadMatrixf(m.getPointer());
+	glutSolidTeapot(1);
+	if (debug)
 	{
-		case HEAD:
-			glLoadMatrixf(m.getPointer());
-			glutSolidTeapot(1);
-			if (intersectCharacter(m))
-			{
-				cout << "drawing" << endl;
-				glLoadIdentity();
-				updateParticles();
-				drawParticles();
-			}
-			break;
-		case TORSO:
-			glLoadMatrixf(m.getPointer());
-			glutSolidCube(1);
-			break;
+		glColor3d(1.0,0.0,0.0);
+		//glutWireCube(2.2);
+		drawBoundingBox();
+	}
+	if (intersectCharacter(m))
+	{
+		cout << "drawing" << endl;
+		glLoadIdentity();
+		updateParticles();
+		drawParticles();
 	}
 
-	/*if (debug)
-	{
-		switch (this->id)
-		{
-			case HEAD:
-				glColor3d(0.0,0.0,1.0);
-				glutWireSphere(2,8,8);
-				break;
-			case TORSO:
-				glColor3d(0.0,0.0,1.0);
-				glutWireSphere(1,8,8);
-				break;
-		}
-	}*/
 }

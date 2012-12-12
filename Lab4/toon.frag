@@ -1,17 +1,37 @@
-varying float intensity;
-
-void main()
+varying vec3 vNormal;
+varying vec3 vVertex;
+#define shininess 20.0
+void main (void)
 {
-	vec4 color;
-	if (intensity > 0.95)
-
-		color = vec4(1.0,0.5,0.5,1.0);
-	else if (intensity > 0.5)
-		color = vec4(0.6,0.3,0.3,1.0);
-	else if (intensity > 0.25)
-		color = vec4(0.4,0.2,0.2,1.0);
-	else
-		color = vec4(0.2,0.1,0.1,1.0);
-	gl_FragColor = color;
-
+         
+// Material Color:
+vec4 color0 = vec4(0.8, 0.0, 0.0, 1.0);
+         
+// Silhouette Color:
+vec4 color1 = vec4(0.0, 0.0, 0.0, 1.0);
+         
+// Specular Color:
+vec4 color2 = vec4(0.8, 0.0, 0.0, 1.0);
+            
+// Lighting
+vec3 eyePos = vec3(0.0,0.0,5.0);
+vec3 lightPos = vec3(0.0,5.0,5.0);
+vec3 Normal = normalize(gl_NormalMatrix * vNormal);
+vec3 EyeVert = normalize(eyePos - vVertex);
+vec3 LightVert = normalize(lightPos - vVertex);
+vec3 EyeLight = normalize(LightVert+EyeVert);
+// Simple Silhouette
+float sil = max(dot(Normal,EyeVert), 0.0);
+if (sil < 0.3) gl_FragColor = color1;
+else 
+  {
+   gl_FragColor = color0;
+   // Specular part
+   float spec = pow(max(dot(Normal,EyeLight),0.0), shininess);
+   if (spec < 0.2) gl_FragColor *= 0.8;
+   else gl_FragColor = color2;
+   // Diffuse part
+   float diffuse = max(dot(Normal,LightVert),0.0);
+   if (diffuse < 0.5) gl_FragColor *=0.8;
+   }
 }

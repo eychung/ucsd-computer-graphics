@@ -13,8 +13,6 @@
 #include "../lib/glut-3.7.6-bin/include/GL/glut.h"
 
 class Sphere : public Geode {
-	private:
-		int id;
 	// should consist of a draw function which uses OpenGL code to create a sphere
 	// you can use glutSolidSphere to render the sphere
 	public:

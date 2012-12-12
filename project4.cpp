@@ -509,6 +509,48 @@ bool keys[4]; // wasd
 bool jump = false;
 float j_start = -1.5;
 float j_x;
+int rage_count = 0;
+
+int rage_path = 0;
+
+void selectRandomPath()
+{
+	if (rage_count == 0) // select random path
+	{
+		rage_path = rand()%5;
+		rage_count += 1;
+	}
+	else // continue executing code
+	{
+		rage_count++;
+		if (rage_count < 30)
+		{
+			if (rage_path == 0)
+			{
+				
+				rotation.getMatrix().setMatrix(world.getMatrix().rotateY(-0.2));
+				world.getMatrix().setMatrix(world.getMatrix().multiply(rotation.getMatrix()));
+				world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,2.1));
+				rage_count+=5;
+			}
+			else if (rage_path == 1)
+			{
+				world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,2.1));
+				rotation.getMatrix().setMatrix(world.getMatrix().rotateY(0.2));
+				world.getMatrix().setMatrix(world.getMatrix().multiply(rotation.getMatrix()));
+				rage_count+=5;
+			}
+			else
+			{
+				world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,2.1));
+			}
+		}
+		else
+		{
+			rage_count = 0;
+		}
+	}
+}
 
 void keyDown(unsigned char key, int x, int y) {
 	Vector3 v;
@@ -537,7 +579,7 @@ void keyDown(unsigned char key, int x, int y) {
 			toggle_view = !toggle_view;
 			if (toggle_view)
 			{
-				v = Vector3(0,0,-5);
+				v = Vector3(0,10,5);
 				camera.lookAt(v,l,up);
 				camera.getE().print();
 				camera.getMatrix().print();
@@ -558,6 +600,7 @@ void keyDown(unsigned char key, int x, int y) {
 			break;
 		case 'r':
 			toggle_run = !toggle_run;
+			rage_count = 0;
 			break;
 		case 'p':
 			world.getMatrix().identity();
@@ -637,7 +680,8 @@ void processMovement()
 			toggle_run = false;
 		}
 		else {
-			world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,1.1));
+			//world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,1.1));
+			selectRandomPath();
 		}
 	}
 	if (keys[A])
@@ -810,7 +854,16 @@ void drawCharacter()
 	glEnd();
 }
 
-bool collision = false;
+bool insideWorld(Matrix4 m)
+{
+	cout << *(m.getPointer() + 12) << " and " << *(m.getPointer() + 13) << " and " << *(m.getPointer() + 14) << endl;
+
+	if (*(m.getPointer() + 12) < 240 && *(m.getPointer() + 12) > -240 &&
+		*(m.getPointer() + 13) < 240 && *(m.getPointer() + 13) > -240 &&
+		*(m.getPointer() + 14) < 240 && *(m.getPointer() + 14) > -240)
+		return true;
+	return false;
+}
 
 //----------------------------------------------------------------------------
 // Callback method called when window readraw is necessary or
@@ -820,6 +873,7 @@ void window::displayCallback(void)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // clear color and depth buffers
 
 	processMovement();
+
 	camera.inverseCamera();
 	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
 	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
@@ -839,14 +893,14 @@ void window::displayCallback(void)
 	if (debug)
 	{
 		glColor3f(1.0,0.0,0.0);
-		glutWireSphere(2.2,30,30);
+		glutWireCube(3.6);
 	}
 	drawFPS();
 	glDisable(GL_LIGHTING);
 	glDisable(GL_LIGHT0);
 
 	glLoadMatrixf(world.getMatrix().getPointer());
-	Draw_Skybox(0,150,0,1000,1000,1000);
+	Draw_Skybox(0,150,0,500,500,500);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
 	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
 	glCallList(terrainListID);
@@ -877,21 +931,47 @@ void createWorld()
 	m_world.identity();
 	g_world = new MatrixTransform(id_world, m_world);
 	int id = 0;
+	int type;
 	srand(1);
 	float c_x,c_y,c_z;
-	while (id < 15) {
-		Geode* mesh_obj = new Sphere(HEAD);
+	while (id < 20) {
+		type = rand()%4;
+		
+		Matrix4 m_obj = Matrix4();
+		/*m_obj.setMatrix(m_obj.rotateX((float)rand()/((float)RAND_MAX/(2*PI))));
+		m_obj.setMatrix(m_obj.rotateY((float)rand()/((float)RAND_MAX/(2*PI))));
+		m_obj.setMatrix(m_obj.rotateZ((float)rand()/((float)RAND_MAX/(2*PI))));*/
+		
+		Geode* mesh_obj;
+		mesh_obj = new Sphere(SIZE1);
+		m_obj.setMatrix(m_obj.scale(1.0,1.0,1.0));
+		/*switch (type)
+		{
+			case SIZE1:
+				mesh_obj = new Sphere(SIZE1);
+				m_obj.setMatrix(m_obj.scale(1.0,1.0,1.0));
+				break;
+			case SIZE2:
+				mesh_obj = new Sphere(SIZE2);
+				m_obj.setMatrix(m_obj.scale(3.0,3.0,3.0));
+				break;
+			case SIZE3:
+				mesh_obj = new Sphere(SIZE3);
+				m_obj.setMatrix(m_obj.scale(5.0,5.0,5.0));
+				break;
+			case SIZE4:
+				mesh_obj = new Sphere(SIZE4);
+				m_obj.setMatrix(m_obj.scale(7.0,7.0,7.0));
+				break;
+		}*/
+		
 		c_x = rand()%300-rand()%300;
 		c_y = 0;
 		c_z = rand()%300-rand()%300;
 		mesh_obj->setPos(c_x,c_y,c_z);
-		Matrix4 m_obj = Matrix4();
-		m_obj.setMatrix(m_obj.rotateX((float)rand()/((float)RAND_MAX/(2*PI))));
-		m_obj.setMatrix(m_obj.rotateY((float)rand()/((float)RAND_MAX/(2*PI))));
-		m_obj.setMatrix(m_obj.rotateZ((float)rand()/((float)RAND_MAX/(2*PI))));
-		m_obj.setMatrix(m_obj.scale(5.0,5.0,5.0));
 		m_obj.setMatrix(m_obj.translate(c_x,c_y,c_z));
-		char id_obj[] = "hi";
+		
+		char id_obj[] = " ";
 		Group* mt_obj = new MatrixTransform(id_obj, m_obj);
 		g_world->addNode(mt_obj);
 		mt_obj->addNode(mesh_obj);

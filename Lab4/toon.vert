@@ -1,8 +1,9 @@
-uniform vec3 lightDir;
-varying float intensity;
-
-void main()
+varying vec3 vNormal;
+varying vec3 vVertex;
+            
+void main(void)
 {
-	intensity = dot(lightDir,gl_Normal);
-	gl_Position = ftransform();
+ vVertex = gl_Vertex.xyz;
+ vNormal = gl_Normal;
+ gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
 }

@@ -112,11 +112,11 @@ void Sphere::draw(Matrix4 m)
 
 	if (intersectCharacter(m))
 	{
-		cout << do_once << endl;
+		//cout << do_once << endl;
 		if (do_once)
 		{
 			initParticles(*(m.getPointer() + 12),*(m.getPointer() + 13)+5.0,*(m.getPointer() + 14));
-			cout << "init" << endl; 
+			//cout << "init" << endl; 
 			do_once = false;
 		}
 		glColor3d(1.0,0.0,0.0);
@@ -124,7 +124,7 @@ void Sphere::draw(Matrix4 m)
 	else
 	{
 		glColor3d(0.8,1.0,0.0);
-		do_once = true;
+		//do_once = true;
 	}
 
 	glLoadMatrixf(m.getPointer());

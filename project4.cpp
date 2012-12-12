@@ -892,7 +892,7 @@ void drawCharacter()
 
 bool insideWorld(Matrix4 m)
 {
-	cout << *(m.getPointer() + 12) << " and " << *(m.getPointer() + 13) << " and " << *(m.getPointer() + 14) << endl;
+	//cout << *(m.getPointer() + 12) << " and " << *(m.getPointer() + 13) << " and " << *(m.getPointer() + 14) << endl;
 
 	if (*(m.getPointer() + 12) < 350 && *(m.getPointer() + 12) > -350 &&
 		*(m.getPointer() + 13) < 350 && *(m.getPointer() + 13) > -350 &&
@@ -908,7 +908,7 @@ void window::displayCallback(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // clear color and depth buffers
 
-	cout << *(world.getMatrix().getPointer() + 12) << " and " << *(world.getMatrix().getPointer() + 13) << " and " << *(world.getMatrix().getPointer() + 14) << endl;
+	//cout << *(world.getMatrix().getPointer() + 12) << " and " << *(world.getMatrix().getPointer() + 13) << " and " << *(world.getMatrix().getPointer() + 14) << endl;
 
 	if (toggle_rage && !insideWorld(world.getMatrix()) && !jump)
 	{
@@ -931,7 +931,10 @@ void window::displayCallback(void)
 	all.getMatrix().setMatrix(cube.getMatrix().rotateY(PI/2));
 	all.getMatrix().setMatrix(all.getMatrix().multiply(camera.getMatrix())); // YOU
 	glLoadMatrixf(all.getMatrix().getPointer());
-	glColor3f(0.0,0.0,1.0);
+	if (toggle_rage)
+		glColor3f(1.0,0.0,0.0);
+	else
+		glColor3f(0.0,0.0,1.0);
 	if (toggle_shader) shader->bind();
 	glutSolidSphere(2,30,30);
 	if (toggle_shader) shader->unbind();
@@ -1102,7 +1105,7 @@ int main(int argc, char *argv[])
 	th1.terrainScale(0,TERRAIN_ONE_HEIGHT);
 	TERRAIN_ONE_ID = th1.terrainCreateDL(0,0,0);
 
-	cout << "Generating terrain2" << endl;
+	/*cout << "Generating terrain2" << endl;
 	TerrainHelper th2;
 	th2.terrainLoad(800,800,1);
 	th2.terrainScale(0, TERRAIN_TWO_HEIGHT);
@@ -1112,7 +1115,7 @@ int main(int argc, char *argv[])
 	TerrainHelper th3;
 	th3.terrainLoad(800, 800,1);
 	th3.terrainScale(0,TERRAIN_THREE_HEIGHT);
-	TERRAIN_THREE_ID = th3.terrainCreateDL(0,0,0);
+	TERRAIN_THREE_ID = th3.terrainCreateDL(0,0,0);*/
 
 	CURRENT_TERRAIN_ID = TERRAIN_ONE_ID;
 

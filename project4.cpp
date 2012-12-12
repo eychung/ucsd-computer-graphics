@@ -513,7 +513,7 @@ void processMotion(int x, int y)
 bool keys[4]; // wasd
 bool jump = false;
 float j_start = -1.5;
-float j_x;
+float j_x = j_start;
 int rage_count = 0;
 
 int rage_path = 0;
@@ -522,30 +522,49 @@ void selectRandomPath()
 {
 	if (rage_count == 0) // select random path
 	{
-		rage_path = rand()%5;
+		rage_path = rand()%6;
 		rage_count += 1;
 		world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,2.5));
 	}
 	else // continue executing code
 	{
 		rage_count++;
-		if (rage_count < 20)
+		if (rage_count < 20 || jump)
 		{
-			if (rage_path == 0 || rage_path == 1)
+			if (rage_path == 0 || rage_path == 1 || rage_path == 4)
 			{
 				world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,2.5));
 				rotation.getMatrix().setMatrix(world.getMatrix().rotateY(-0.07));
 				world.getMatrix().setMatrix(world.getMatrix().multiply(rotation.getMatrix()));
 			}
-			else if (rage_path == 2 || rage_path == 3)
+			else if (rage_path == 2 || rage_path == 3 || rage_path == 4)
 			{
 				world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,2.5));
 				rotation.getMatrix().setMatrix(world.getMatrix().rotateY(0.07));
 				world.getMatrix().setMatrix(world.getMatrix().multiply(rotation.getMatrix()));
 			}
+			else if (rage_path == 4)
+			{
+				jump = true;
+			}
 			else
 			{
 				world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,2.5));
+			}
+
+			if (jump)
+			{
+				j_x += 0.1;
+				float y = -(j_x*j_x);
+				if (j_x >= 0) y = y*-1;
+
+				if (j_x > -j_start)
+				{
+					jump = false;
+					j_x = j_start;
+				}
+				else
+					world.getMatrix().setMatrix(world.getMatrix().translate(0.0,y,0.0));
 			}
 		}
 		else

@@ -90,6 +90,7 @@ Vector3 d = Vector3(0,0,1);
 
 bool is_fullscreen = false;
 const int MAX_PARTICLES = 500;
+const int NUM_OBJECTS = 20;
 
 typedef struct
 {
@@ -111,7 +112,7 @@ typedef struct
 	bool Visible;
 }PARTICLES;
 
-PARTICLES particle[MAX_PARTICLES];
+PARTICLES particle[NUM_OBJECTS][MAX_PARTICLES];
 int TERRAIN_ONE_ID;
 int TERRAIN_TWO_ID;
 int TERRAIN_THREE_ID;
@@ -139,84 +140,84 @@ Matrix4& Cube::getMatrix()
 	return matrix;
 }
 
-void initParticles(float xsrc, float ysrc, float zsrc)
+void initParticles(int id, float xsrc, float ysrc, float zsrc)
 {
 	for (int i = 0; i < MAX_PARTICLES; ++i)
 	{
-		particle[i].Xsrc = xsrc;
-		particle[i].Ysrc = ysrc;
-		particle[i].Zsrc = zsrc;
-		particle[i].Xpos = xsrc;
-		particle[i].Ypos = ysrc + 5;
-		particle[i].Zpos = zsrc;
+		particle[id][i].Xsrc = xsrc;
+		particle[id][i].Ysrc = ysrc;
+		particle[id][i].Zsrc = zsrc;
+		particle[id][i].Xpos = xsrc;
+		particle[id][i].Ypos = ysrc + 5;
+		particle[id][i].Zpos = zsrc;
 		//Set the amount of movement on the X axis to a random number, we dont want
 		//all our particles doing the same thing  
-		particle[i].Xmov = (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1) * rand()%11) + 1) * 0.005) - (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1) * rand()%11) + 1) * 0.005);
+		particle[id][i].Xmov = (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1) * rand()%11) + 1) * 0.005) - (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1) * rand()%11) + 1) * 0.005);
 		//Set the amount of movement on the Z axis to a random number, as above, we dont
 		//want all our particles doing the same thing  
-		particle[i].Zmov = (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1) * rand()%11) + 1) * 0.005) - (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1) * rand()%11) + 1) * 0.005);
+		particle[id][i].Zmov = (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1) * rand()%11) + 1) * 0.005) - (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1) * rand()%11) + 1) * 0.005);
 		//Set the amount of Red to 1
-		particle[i].Red = 1;
+		particle[id][i].Red = 1;
 		//Set the amount of Green to 1
-		particle[i].Green = 1;
+		particle[id][i].Green = 1;
 		//Set the amount of Blue to 1
-		particle[i].Blue = 1;
+		particle[id][i].Blue = 1;
 		//Scale the particle to 1 quarter of its original size
-		particle[i].Scalez = 0.25;
+		particle[id][i].Scalez = 0.25;
 		//Set the initial rotation angle to 0
-		particle[i].Direction = 0;
+		particle[id][i].Direction = 0;
 		//Set the amount of acceleration to a random number so they climb to different
 		//heights
-		particle[i].Acceleration = ((((((8 - 5 + 2) * rand()%11) + 5) - 1 + 1) * rand()%11) + 1) * 0.02;
+		particle[id][i].Acceleration = ((((((8 - 5 + 2) * rand()%11) + 5) - 1 + 1) * rand()%11) + 1) * 0.02;
 		//Decrease their acceleration by 0.0025. They will slow down at a constant
 		//rate but you will not see a difference
-		particle[i].Deceleration = 0.0025;
+		particle[id][i].Deceleration = 0.0025;
 	}
 }
 
-void updateParticles()
+void updateParticles(int id)
 {
 	for (int i = 0; i < MAX_PARTICLES; ++i)
 	{
 		//Set the color of the current particle
-		glColor3f (particle[i].Red, particle[i].Green, particle[i].Blue);
+		glColor3f (particle[id][i].Red, particle[id][i].Green, particle[id][i].Blue);
 
 		//Move the particle on the Y axes, adding on the amount of acceleration
 		//and then subtracting the rate of deceleration
-		particle[i].Ypos = particle[i].Ypos + particle[i].Acceleration - particle[i].Deceleration;
+		particle[id][i].Ypos = particle[id][i].Ypos + particle[id][i].Acceleration - particle[id][i].Deceleration;
 		//Increase the deceleration rate so the particle falls gaining speed
-		particle[i].Deceleration = particle[i].Deceleration + 0.0025;
+		particle[id][i].Deceleration = particle[id][i].Deceleration + 0.0025;
 
 		//Move the particle on the X axis
-		particle[i].Xpos = particle[i].Xpos + particle[i].Xmov;
+		particle[id][i].Xpos = particle[id][i].Xpos + particle[id][i].Xmov;
 		//Move the particle on the Z axis
-		particle[i].Zpos = particle[i].Zpos + particle[i].Zmov;
+		particle[id][i].Zpos = particle[id][i].Zpos + particle[id][i].Zmov;
 
 		//Rotate the particle
-		particle[i].Direction = particle[i].Direction + ((((((int)(0.5 - 0.1 + 0.1) * rand()%11) + 1) - 1 + 1) * rand()%11) + 1);
+		particle[id][i].Direction = particle[id][i].Direction + ((((((int)(0.5 - 0.1 + 0.1) * rand()%11) + 1) - 1 + 1) * rand()%11) + 1);
 
 		//Now here I am saying that if the particle goes beneath its initial height
 		//which I set earlier to -5, then it will restart the particle changing some
 		//of the variables.
-		if (particle[i].Ypos < -5)
+		if (particle[id][i].Ypos < -5)
 		{
-			particle[i].Xpos = particle[i].Xsrc;
-			particle[i].Ypos = particle[i].Ysrc;
-			particle[i].Zpos = particle[i].Zsrc;
-			particle[i].Red = 1;
-			particle[i].Green = 1;
-			particle[i].Blue = 1;
+			particle[id][i].Xpos = particle[id][i].Xsrc;
+			particle[id][i].Ypos = particle[id][i].Ysrc;
+			particle[id][i].Zpos = particle[id][i].Zsrc;
+			particle[id][i].Red = 1;
+			particle[id][i].Green = 1;
+			particle[id][i].Blue = 1;
 			//Set the angle of rotation
-			particle[i].Direction = 0;
+			particle[id][i].Direction = 0;
 			//Adjust the Acceleration rate to another random number
-			particle[i].Acceleration = ((((((8 - 5 + 2) * rand()%11) + 5) - 1 + 1) * rand()%11) + 1) * 0.02;
+			particle[id][i].Acceleration = ((((((8 - 5 + 2) * rand()%11) + 5) - 1 + 1) * rand()%11) + 1) * 0.02;
 			//Reset the Deceleration rate
-			particle[i].Deceleration = 0.0025;
+			particle[id][i].Deceleration = 0.0025;
 		}
 	}
 }
 
-void drawParticles()
+void drawParticles(int id, Matrix4 m)
 {
 	for (int i = 0; i < MAX_PARTICLES; ++i)
 	{
@@ -224,15 +225,28 @@ void drawParticles()
 		//all to be affected by the ones prior
 		glPushMatrix();
 
+		Vector3 v = Vector3(particle[id][i].Xpos, particle[id][i].Ypos, particle[id][i].Zpos);
+		Vector3 center = Vector3(*(m.getPointer() + 12), *(m.getPointer() + 13), *(m.getPointer() + 14));
+		Vector3 res = v + center;
+		cout << "v: ";
+		v.print();
+		cout << "center: ";
+		center.print();
+		cout << "res: ";
+		res.print();
+
+		//res.print();
+
 		//Translate the particle on the X, Y and Z axis accordingly
-		glTranslatef (particle[i].Xpos, particle[i].Ypos, particle[i].Zpos);
+		glTranslatef (res[0], res[1], res[2]);
+		//glTranslatef(v[0], v[1], v[2]);
 
 		//Rotate the particle
-		glRotatef (particle[i].Direction - 90, 0, 0, 1);
+		glRotatef (particle[id][i].Direction - 90, 0, 0, 1);
 		//Scale the particle
-		glScalef (particle[i].Scalez, particle[i].Scalez, particle[i].Scalez);
+		glScalef (particle[id][i].Scalez, particle[id][i].Scalez, particle[id][i].Scalez);
 
-		glColor3f(particle[i].Red, particle[i].Green, particle[i].Blue);
+		glColor3f(particle[id][i].Red, particle[id][i].Green, particle[id][i].Blue);
 
 		//Disable Depth Testing so our masking appears as one
 		glDisable (GL_DEPTH_TEST);
@@ -984,7 +998,7 @@ void createWorld()
 	int type;
 	srand(1);
 	float c_x,c_y,c_z;
-	while (id < 20) {
+	while (id < NUM_OBJECTS) {
 		type = rand()%4;
 		
 		Matrix4 m_obj = Matrix4();
@@ -993,30 +1007,29 @@ void createWorld()
 		m_obj.setMatrix(m_obj.rotateZ((float)rand()/((float)RAND_MAX/(2*PI))));
 		
 		Geode* mesh_obj;
-		switch (type)
-		{
-			case SIZE1:
-				mesh_obj = new Sphere(SIZE1);
-				m_obj.setMatrix(m_obj.scale(1.0,1.0,1.0));
-				break;
-			case SIZE2:
-				mesh_obj = new Sphere(SIZE2);
-				m_obj.setMatrix(m_obj.scale(3.0,3.0,3.0));
-				break;
-			case SIZE3:
-				mesh_obj = new Sphere(SIZE3);
-				m_obj.setMatrix(m_obj.scale(5.0,5.0,5.0));
-				break;
-			case SIZE4:
-				mesh_obj = new Sphere(SIZE4);
-				m_obj.setMatrix(m_obj.scale(7.0,7.0,7.0));
-				break;
-		}
-		
+
 		c_x = rand()%300-rand()%300;
 		c_y = 0;
 		c_z = rand()%300-rand()%300;
-		mesh_obj->setPos(c_x,c_y,c_z);
+		switch (type)
+		{
+			case SIZE1:
+				mesh_obj = new Sphere(id, SIZE1, c_x, c_y, c_z);
+				m_obj.setMatrix(m_obj.scale(1.0,1.0,1.0));
+				break;
+			case SIZE2:
+				mesh_obj = new Sphere(id, SIZE2, c_x, c_y, c_z);
+				m_obj.setMatrix(m_obj.scale(3.0,3.0,3.0));
+				break;
+			case SIZE3:
+				mesh_obj = new Sphere(id, SIZE3, c_x, c_y, c_z);
+				m_obj.setMatrix(m_obj.scale(5.0,5.0,5.0));
+				break;
+			case SIZE4:
+				mesh_obj = new Sphere(id, SIZE4, c_x, c_y, c_z);
+				m_obj.setMatrix(m_obj.scale(7.0,7.0,7.0));
+				break;
+		}
 		m_obj.setMatrix(m_obj.translate(c_x,c_y,c_z));
 		
 		char id_obj[] = " ";
@@ -1097,13 +1110,13 @@ int main(int argc, char *argv[])
 	loadTexture(texture_array,"desert_top.ppm", SKYUP);
 	loadTexture(texture_array,"rust.ppm", 5);
 
-	cout << "Generating terrain1" << endl;
+	/*cout << "Generating terrain1" << endl;
 	TerrainHelper th1;
 	th1.terrainLoad(800,800,1);
 	th1.terrainScale(0,TERRAIN_ONE_HEIGHT);
 	TERRAIN_ONE_ID = th1.terrainCreateDL(0,0,0);
 
-	/*cout << "Generating terrain2" << endl;
+	cout << "Generating terrain2" << endl;
 	TerrainHelper th2;
 	th2.terrainLoad(800,800,1);
 	th2.terrainScale(0, TERRAIN_TWO_HEIGHT);

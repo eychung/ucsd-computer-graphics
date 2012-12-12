@@ -17,6 +17,7 @@ class Sphere : public Geode {
 	// you can use glutSolidSphere to render the sphere
 	public:
 		Sphere(int id);
+		Sphere(int id, int size, float x, float y, float z);
 		void draw(Matrix4 m);
 };
 

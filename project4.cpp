@@ -43,7 +43,7 @@ bool light0Toggle = false;
 bool light1Toggle = false;
 bool toggle_shader = false;
 bool toggle_texture = false;
-bool toggle_run = false;
+bool toggle_rage = false;
 bool toggle_view = false;
 
 int shader_state = -1;
@@ -528,26 +528,23 @@ void selectRandomPath()
 	else // continue executing code
 	{
 		rage_count++;
-		if (rage_count < 30)
+		if (rage_count < 10)
 		{
-			if (rage_path == 0)
+			if (rage_path == 0 || rage_path == 1)
 			{
-				
-				rotation.getMatrix().setMatrix(world.getMatrix().rotateY(-0.2));
-				world.getMatrix().setMatrix(world.getMatrix().multiply(rotation.getMatrix()));
 				world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,2.1));
-				rage_count+=5;
+				rotation.getMatrix().setMatrix(world.getMatrix().rotateY(-0.05));
+				world.getMatrix().setMatrix(world.getMatrix().multiply(rotation.getMatrix()));
 			}
-			else if (rage_path == 1)
+			else if (rage_path == 2 || rage_path == 3)
 			{
 				world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,2.1));
-				rotation.getMatrix().setMatrix(world.getMatrix().rotateY(0.2));
+				rotation.getMatrix().setMatrix(world.getMatrix().rotateY(0.05));
 				world.getMatrix().setMatrix(world.getMatrix().multiply(rotation.getMatrix()));
-				rage_count+=5;
 			}
 			else
 			{
-				world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,2.1));
+				world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,3.5));
 			}
 		}
 		else
@@ -604,7 +601,7 @@ void keyDown(unsigned char key, int x, int y) {
 				glDisable(GL_LIGHT0);
 			break;*/
 		case 'r':
-			toggle_run = !toggle_run;
+			toggle_rage = !toggle_rage;
 			rage_count = 0;
 			break;
 		case 'p':
@@ -673,7 +670,7 @@ void keyUp(unsigned char key, int x, int y)
 void processMovement()
 {
 	float y;
-	if (!toggle_run)
+	if (!toggle_rage)
 	{
 		if (keys[W])
 		{
@@ -689,12 +686,12 @@ void processMovement()
 		if (keys[W])
 		{
 			world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,1.1));
-			toggle_run = false;
+			toggle_rage = false;
 		}
 		if (keys[S])
 		{
 			world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,-1.1));
-			toggle_run = false;
+			toggle_rage = false;
 		}
 		else {
 			//world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,1.1));
@@ -875,9 +872,9 @@ bool insideWorld(Matrix4 m)
 {
 	cout << *(m.getPointer() + 12) << " and " << *(m.getPointer() + 13) << " and " << *(m.getPointer() + 14) << endl;
 
-	if (*(m.getPointer() + 12) < 240 && *(m.getPointer() + 12) > -240 &&
-		*(m.getPointer() + 13) < 240 && *(m.getPointer() + 13) > -240 &&
-		*(m.getPointer() + 14) < 240 && *(m.getPointer() + 14) > -240)
+	if (*(m.getPointer() + 12) < 350 && *(m.getPointer() + 12) > -350 &&
+		*(m.getPointer() + 13) < 350 && *(m.getPointer() + 13) > -350 &&
+		*(m.getPointer() + 14) < 350 && *(m.getPointer() + 14) > -350)
 		return true;
 	return false;
 }
@@ -889,7 +886,16 @@ void window::displayCallback(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // clear color and depth buffers
 
-	processMovement();
+	cout << *(world.getMatrix().getPointer() + 12) << " and " << *(world.getMatrix().getPointer() + 13) << " and " << *(world.getMatrix().getPointer() + 14) << endl;
+
+	if (toggle_rage && !insideWorld(world.getMatrix()))
+	{
+		world.getMatrix().identity();
+	}
+	else
+	{
+		processMovement();
+	}
 
 	camera.inverseCamera();
 	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);

@@ -958,14 +958,12 @@ void createWorld()
 		type = rand()%4;
 		
 		Matrix4 m_obj = Matrix4();
-		/*m_obj.setMatrix(m_obj.rotateX((float)rand()/((float)RAND_MAX/(2*PI))));
+		m_obj.setMatrix(m_obj.rotateX((float)rand()/((float)RAND_MAX/(2*PI))));
 		m_obj.setMatrix(m_obj.rotateY((float)rand()/((float)RAND_MAX/(2*PI))));
-		m_obj.setMatrix(m_obj.rotateZ((float)rand()/((float)RAND_MAX/(2*PI))));*/
+		m_obj.setMatrix(m_obj.rotateZ((float)rand()/((float)RAND_MAX/(2*PI))));
 		
 		Geode* mesh_obj;
-		mesh_obj = new Sphere(SIZE1);
-		m_obj.setMatrix(m_obj.scale(1.0,1.0,1.0));
-		/*switch (type)
+		switch (type)
 		{
 			case SIZE1:
 				mesh_obj = new Sphere(SIZE1);
@@ -983,7 +981,7 @@ void createWorld()
 				mesh_obj = new Sphere(SIZE4);
 				m_obj.setMatrix(m_obj.scale(7.0,7.0,7.0));
 				break;
-		}*/
+		}
 		
 		c_x = rand()%300-rand()%300;
 		c_y = 0;

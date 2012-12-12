@@ -40,9 +40,9 @@ class Geode : public Node {
 			switch (id)
 			{
 				case SIZE1:
-					if (4 > c_x && -4 < c_x && 4 > c_y && -4 < c_y && -1 > c_z && -1 < c_z) 
+					if (4 > c_x && -4 < c_x && 4 > c_y && -4 < c_y && -2 > c_z && -4 < c_z) 
 					{
-						cout << c_x << " and " << c_y << " and " << c_z << endl;
+						//cout << c_x << " and " << c_y << " and " << c_z << endl;
 						return true;
 					}
 					break;
@@ -56,14 +56,14 @@ class Geode : public Node {
 				case SIZE3:
 					if (8 > c_x && -8 < c_x && 8 > c_y && -8 < c_y && 6 > c_z && -12 < c_z)
 					{
-						cout << c_x << " and " << c_y << " and " << c_z << endl;
+						//cout << c_x << " and " << c_y << " and " << c_z << endl;
 						return true;
 					}
 					break;
 				case SIZE4:
 					if (10 > c_x && -10 < c_x && 10 > c_y && -10 < c_y && 12 > c_z && -16 < c_z) 
 					{
-						cout << c_x << " and " << c_y << " and " << c_z << endl;
+						//cout << c_x << " and " << c_y << " and " << c_z << endl;
 						return true;
 					}
 					break;

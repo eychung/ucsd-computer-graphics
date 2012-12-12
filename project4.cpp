@@ -65,7 +65,7 @@ GLfloat mat_specular[]  = {1.0,1.0,1.0,1.0};
 GLfloat mat_shininess[] = {25.0};
 
 GLfloat light0_diffuse[] = {1.0,0.827,0.608,1.0};
-GLfloat light0_diffuse_character[] = {1.0,0.0,0.0,1.0};
+GLfloat light0_diffuse_rage[] = {1.0,0.0,0.0,1.0};
 GLfloat light0_specular[] = {1.0,1.0,1.0,1.0};
 GLfloat light0_shininess[] = {25.0};
 GLfloat light0_position[] = {0.0,50.0,0.0};
@@ -265,7 +265,8 @@ void Draw_Skybox(float x, float y, float z, float width, float height, float len
 	y = y - height / 2;
 	z = z - length / 2;
 
-	glColor4f(1,1,1,1);
+	if (toggle_rage) glColor4f(1,0,0,1);
+	else glColor4f(1,1,1,1);
 	// Draw Front side
 	glBindTexture(GL_TEXTURE_2D, texture_array[SKYFRONT]);
 	glBegin(GL_QUADS);	
@@ -529,7 +530,7 @@ void selectRandomPath()
 	else // continue executing code
 	{
 		rage_count++;
-		if (rage_count < 20 || jump)
+		if (rage_count < 10 || jump)
 		{
 			if (rage_path == 4)
 			{
@@ -945,7 +946,8 @@ void window::displayCallback(void)
 
 	glLoadMatrixf(world.getMatrix().getPointer());
 	Draw_Skybox(0,150,0,800,800,800);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
+	if (!toggle_rage) glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
+	else glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse_rage);
 	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
 	glPushMatrix();
 	glTranslatef(0, -CURRENT_TERRAIN_HEIGHT, 0);

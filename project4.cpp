@@ -531,6 +531,10 @@ void selectRandomPath()
 		rage_count++;
 		if (rage_count < 20 || jump)
 		{
+			if (rage_path == 4)
+			{
+				jump = true;
+			}
 			if (rage_path == 0 || rage_path == 1 || rage_path == 4)
 			{
 				world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,2.5));
@@ -543,15 +547,11 @@ void selectRandomPath()
 				rotation.getMatrix().setMatrix(world.getMatrix().rotateY(0.07));
 				world.getMatrix().setMatrix(world.getMatrix().multiply(rotation.getMatrix()));
 			}
-			else if (rage_path == 4)
-			{
-				jump = true;
-			}
 			else
 			{
 				world.getMatrix().setMatrix(world.getMatrix().translate(0.0,0,2.5));
 			}
-
+			
 			if (jump)
 			{
 				j_x += 0.1;
@@ -909,7 +909,7 @@ void window::displayCallback(void)
 
 	cout << *(world.getMatrix().getPointer() + 12) << " and " << *(world.getMatrix().getPointer() + 13) << " and " << *(world.getMatrix().getPointer() + 14) << endl;
 
-	if (toggle_rage && !insideWorld(world.getMatrix()))
+	if (toggle_rage && !insideWorld(world.getMatrix()) && !jump)
 	{
 		world.getMatrix().identity();
 	}

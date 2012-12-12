@@ -935,9 +935,7 @@ void window::displayCallback(void)
 		glColor3f(1.0,0.0,0.0);
 	else
 		glColor3f(0.0,0.0,1.0);
-	if (toggle_shader) shader->bind();
 	glutSolidSphere(2,30,30);
-	if (toggle_shader) shader->unbind();
 	if (debug)
 	{
 		glColor3f(1.0,0.0,0.0);

@@ -19,6 +19,7 @@ class Geode : public Node {
 		float centerZ;
 		float radius;
 		int id;
+		int size;
 	public:
 		void setPos(float x, float y, float z)
 		{
@@ -37,7 +38,7 @@ class Geode : public Node {
 			float c_x = *(m.getPointer() + 12);
 			float c_y = *(m.getPointer() + 13);
 			float c_z = *(m.getPointer() + 14);
-			switch (id)
+			switch (size)
 			{
 				case SIZE1:
 					if (4 > c_x && -4 < c_x && 4 > c_y && -4 < c_y && -2 > c_z && -4 < c_z) 

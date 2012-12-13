@@ -11,9 +11,9 @@ extern int nIndices;
 extern int * indices;
 
 extern bool toggle_shader;
-extern void initParticles(float xsrc, float ysrc, float zsrc);
-extern void updateParticles();
-extern void drawParticles();
+extern void initParticles(int id, float xsrc, float ysrc, float zsrc);
+extern void updateParticles(int id);
+extern void drawParticles(int id, Matrix4 m);
 
 GLfloat light_diffuse[] = {1.0,0.0,0.0,1.0};
 extern GLfloat mat_specular[];
@@ -27,6 +27,14 @@ using namespace std;
 Sphere::Sphere(int id)
 {
 	this->id = id;
+}
+
+Sphere::Sphere(int id, int size, float x, float y, float z)
+{
+	this->id = id;
+	this->size = size;
+	setPos(x,y,z);
+	initParticles(id, x, y, z);
 }
 
 void drawObj()
@@ -112,19 +120,11 @@ void Sphere::draw(Matrix4 m)
 
 	if (intersectCharacter(m))
 	{
-		//cout << do_once << endl;
-		if (do_once)
-		{
-			initParticles(*(m.getPointer() + 12),*(m.getPointer() + 13)+5.0,*(m.getPointer() + 14));
-			//cout << "init" << endl; 
-			do_once = false;
-		}
 		glColor3d(1.0,0.0,0.0);
 	}
 	else
 	{
 		glColor3d(0.8,1.0,0.0);
-		//do_once = true;
 	}
 
 	glLoadMatrixf(m.getPointer());
@@ -141,8 +141,5 @@ void Sphere::draw(Matrix4 m)
 		//updateParticles();
 		//drawParticles();
 	}
-
-	updateParticles();
-	drawParticles();
 
 }

@@ -94,9 +94,6 @@ const int NUM_OBJECTS = 20;
 
 typedef struct
 {
-	float Xsrc;
-	float Ysrc;
-	float Zsrc;
 	float Xpos;
 	float Ypos;
 	float Zpos;
@@ -109,6 +106,7 @@ typedef struct
 	float Acceleration;
 	float Deceleration;
 	float Scalez;
+	int lifetime;
 	bool Visible;
 }PARTICLES;
 
@@ -121,6 +119,7 @@ int CURRENT_TERRAIN_HEIGHT = 2;
 const float TERRAIN_ONE_HEIGHT = 1.0;
 const float TERRAIN_TWO_HEIGHT = 1.5;
 const float TERRAIN_THREE_HEIGHT = 2.0;
+const int PARTICLE_LIFETIME = 1000;
 
 // FPS
 GLvoid *font_style = GLUT_BITMAP_8_BY_13;
@@ -140,19 +139,10 @@ Matrix4& Cube::getMatrix()
 	return matrix;
 }
 
-void initParticles(int id, float xsrc, float ysrc, float zsrc)
+void initParticles(int id)
 {
 	for (int i = 0; i < MAX_PARTICLES; ++i)
 	{
-		/*particle[id][i].Xsrc = xsrc;
-		particle[id][i].Ysrc = ysrc;
-		particle[id][i].Zsrc = zsrc;
-		particle[id][i].Xpos = xsrc;
-		particle[id][i].Ypos = ysrc + 5;
-		particle[id][i].Zpos = zsrc;*/
-		particle[id][i].Xsrc = 0;
-		particle[id][i].Ysrc = 0;
-		particle[id][i].Zsrc = 0;
 		particle[id][i].Xpos = 0;
 		particle[id][i].Ypos = 0;
 		particle[id][i].Zpos = 0;
@@ -178,6 +168,8 @@ void initParticles(int id, float xsrc, float ysrc, float zsrc)
 		//Decrease their acceleration by 0.0025. They will slow down at a constant
 		//rate but you will not see a difference
 		particle[id][i].Deceleration = 0.0025;
+
+		particle[id][i].lifetime = 0;
 	}
 }
 
@@ -207,9 +199,9 @@ void updateParticles(int id)
 		//of the variables.
 		if (particle[id][i].Ypos < -5)
 		{
-			particle[id][i].Xpos = particle[id][i].Xsrc;
-			particle[id][i].Ypos = particle[id][i].Ysrc;
-			particle[id][i].Zpos = particle[id][i].Zsrc;
+			particle[id][i].Xpos = 0;
+			particle[id][i].Ypos = 0;
+			particle[id][i].Zpos = 0;
 			//Set the angle of rotation
 			particle[id][i].Direction = 0;
 			//Adjust the Acceleration rate to another random number
@@ -217,7 +209,17 @@ void updateParticles(int id)
 			//Reset the Deceleration rate
 			particle[id][i].Deceleration = 0.0025;
 		}
+		if (++particle[id][i].lifetime >= PARTICLE_LIFETIME)
+		{
+			initParticles(id);
+			return;
+		}
 	}
+}
+
+bool isParticleAlive(int id)
+{
+	return particle[id][0].lifetime != 0;
 }
 
 void drawParticles(int id)
@@ -1105,7 +1107,7 @@ int main(int argc, char *argv[])
 	loadTexture(texture_array,"desert_top.ppm", SKYUP);
 	loadTexture(texture_array,"rust.ppm", 5);
 
-	/*cout << "Generating terrain1" << endl;
+	cout << "Generating terrain1" << endl;
 	TerrainHelper th1;
 	th1.terrainLoad(800,800,1);
 	th1.terrainScale(0,TERRAIN_ONE_HEIGHT);
@@ -1121,7 +1123,7 @@ int main(int argc, char *argv[])
 	TerrainHelper th3;
 	th3.terrainLoad(800, 800,1);
 	th3.terrainScale(0,TERRAIN_THREE_HEIGHT);
-	TERRAIN_THREE_ID = th3.terrainCreateDL(0,0,0);*/
+	TERRAIN_THREE_ID = th3.terrainCreateDL(0,0,0);
 
 	CURRENT_TERRAIN_ID = TERRAIN_ONE_ID;
 

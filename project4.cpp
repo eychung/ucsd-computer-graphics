@@ -945,6 +945,10 @@ void window::displayCallback(void)
 	glDisable(GL_LIGHTING);
 	glDisable(GL_LIGHT0);
 
+	//glLoadIdentity();
+	//updateParticles();
+	//drawParticles();
+
 	glLoadMatrixf(world.getMatrix().getPointer());
 	Draw_Skybox(0,150,0,800,800,800);
 	if (!toggle_rage) glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
@@ -1017,6 +1021,7 @@ void createWorld()
 		c_y = 0;
 		c_z = rand()%300-rand()%300;
 		mesh_obj->setPos(c_x,c_y,c_z);
+		initParticles(c_x,c_y,c_z);
 		m_obj.setMatrix(m_obj.translate(c_x,c_y,c_z));
 		
 		char id_obj[] = " ";

@@ -137,9 +137,12 @@ void Sphere::draw(Matrix4 m)
 	}
 	if (intersectCharacter(m))
 	{
-		glLoadIdentity();
-		updateParticles();
-		drawParticles();
+		//glLoadIdentity();
+		//updateParticles();
+		//drawParticles();
 	}
+
+	updateParticles();
+	drawParticles();
 
 }

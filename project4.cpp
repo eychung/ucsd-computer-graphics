@@ -1110,7 +1110,6 @@ int main(int argc, char *argv[])
 	loadTexture(texture_array,"desert_left.ppm", SKYLEFT);
 	loadTexture(texture_array,"desert_right.ppm", SKYRIGHT);
 	loadTexture(texture_array,"desert_top.ppm", SKYUP);
-	loadTexture(texture_array,"rust.ppm", 5);
 
 	cout << "Generating terrain1" << endl;
 	TerrainHelper th1;

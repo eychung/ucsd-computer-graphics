@@ -144,12 +144,18 @@ void initParticles(int id, float xsrc, float ysrc, float zsrc)
 {
 	for (int i = 0; i < MAX_PARTICLES; ++i)
 	{
-		particle[id][i].Xsrc = xsrc;
+		/*particle[id][i].Xsrc = xsrc;
 		particle[id][i].Ysrc = ysrc;
 		particle[id][i].Zsrc = zsrc;
 		particle[id][i].Xpos = xsrc;
 		particle[id][i].Ypos = ysrc + 5;
-		particle[id][i].Zpos = zsrc;
+		particle[id][i].Zpos = zsrc;*/
+		particle[id][i].Xsrc = 0;
+		particle[id][i].Ysrc = 0;
+		particle[id][i].Zsrc = 0;
+		particle[id][i].Xpos = 0;
+		particle[id][i].Ypos = 0;
+		particle[id][i].Zpos = 0;
 		//Set the amount of movement on the X axis to a random number, we dont want
 		//all our particles doing the same thing  
 		particle[id][i].Xmov = (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1) * rand()%11) + 1) * 0.005) - (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1) * rand()%11) + 1) * 0.005);
@@ -157,13 +163,13 @@ void initParticles(int id, float xsrc, float ysrc, float zsrc)
 		//want all our particles doing the same thing  
 		particle[id][i].Zmov = (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1) * rand()%11) + 1) * 0.005) - (((((((2 - 1 + 1) * rand()%11) + 1) - 1 + 1) * rand()%11) + 1) * 0.005);
 		//Set the amount of Red to 1
-		particle[id][i].Red = 1;
+		particle[id][i].Red = 0;
 		//Set the amount of Green to 1
-		particle[id][i].Green = 1;
+		particle[id][i].Green = 0;
 		//Set the amount of Blue to 1
-		particle[id][i].Blue = 1;
+		particle[id][i].Blue = 0;
 		//Scale the particle to 1 quarter of its original size
-		particle[id][i].Scalez = 0.25;
+		particle[id][i].Scalez = 0.1;
 		//Set the initial rotation angle to 0
 		particle[id][i].Direction = 0;
 		//Set the amount of acceleration to a random number so they climb to different
@@ -204,9 +210,6 @@ void updateParticles(int id)
 			particle[id][i].Xpos = particle[id][i].Xsrc;
 			particle[id][i].Ypos = particle[id][i].Ysrc;
 			particle[id][i].Zpos = particle[id][i].Zsrc;
-			particle[id][i].Red = 1;
-			particle[id][i].Green = 1;
-			particle[id][i].Blue = 1;
 			//Set the angle of rotation
 			particle[id][i].Direction = 0;
 			//Adjust the Acceleration rate to another random number
@@ -217,34 +220,25 @@ void updateParticles(int id)
 	}
 }
 
-void drawParticles(int id, Matrix4 m)
+void drawParticles(int id)
 {
+	glDisable(GL_LIGHTING);
 	for (int i = 0; i < MAX_PARTICLES; ++i)
 	{
 		//Distinguish the start of our current particle, we do not wish for them
 		//all to be affected by the ones prior
 		glPushMatrix();
 
-		Vector3 v = Vector3(particle[id][i].Xpos, particle[id][i].Ypos, particle[id][i].Zpos);
-		Vector3 center = Vector3(*(m.getPointer() + 12), *(m.getPointer() + 13), *(m.getPointer() + 14));
-		Vector3 res = v + center;
-		cout << "v: ";
-		v.print();
-		cout << "center: ";
-		center.print();
-		cout << "res: ";
-		res.print();
-
-		//res.print();
+		//Scale the particle
+		glScalef (particle[id][i].Scalez, particle[id][i].Scalez, particle[id][i].Scalez);
 
 		//Translate the particle on the X, Y and Z axis accordingly
-		glTranslatef (res[0], res[1], res[2]);
-		//glTranslatef(v[0], v[1], v[2]);
+		//glTranslatef (res[0], res[1], res[2]);
+		glTranslatef(particle[id][i].Xpos, particle[id][i].Ypos, particle[id][i].Zpos);
 
 		//Rotate the particle
 		glRotatef (particle[id][i].Direction - 90, 0, 0, 1);
-		//Scale the particle
-		glScalef (particle[id][i].Scalez, particle[id][i].Scalez, particle[id][i].Scalez);
+		
 
 		glColor3f(particle[id][i].Red, particle[id][i].Green, particle[id][i].Blue);
 
@@ -254,10 +248,10 @@ void drawParticles(int id, Matrix4 m)
 		//Draw the shape
 
 		glBegin (GL_QUADS);
-		glVertex3f (-1, -1, 0);
-		glVertex3f (1, -1, 0);
-		glVertex3f (1, 1, 0);
-		glVertex3f (-1, 1, 0);
+		glVertex3f (-.1, -.1, 0);
+		glVertex3f (.1, -.1, 0);
+		glVertex3f (.1, .1, 0);
+		glVertex3f (-.1, .1, 0);
 		glEnd();
 
 		//Re-enable Depth Testing
@@ -266,6 +260,7 @@ void drawParticles(int id, Matrix4 m)
 		//End the changes to the current object
 		glPopMatrix();
 	}
+	glEnable(GL_LIGHTING);
 }
 
 void Draw_Skybox(float x, float y, float z, float width, float height, float length)

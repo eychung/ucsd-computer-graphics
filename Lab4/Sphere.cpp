@@ -9,11 +9,14 @@ extern float * normals;
 extern float * texcoords;
 extern int nIndices;
 extern int * indices;
+extern bool toggle_rage;
+extern bool debug;
 
 extern bool toggle_shader;
-extern void initParticles(int id, float xsrc, float ysrc, float zsrc);
+extern void initParticles(int id);
 extern void updateParticles(int id);
 extern void drawParticles(int id);
+extern bool isParticleAlive(int id);
 
 GLfloat light_diffuse[] = {1.0,0.0,0.0,1.0};
 extern GLfloat mat_specular[];
@@ -34,7 +37,7 @@ Sphere::Sphere(int id, int size, float x, float y, float z)
 	this->id = id;
 	this->size = size;
 	setPos(x,y,z);
-	initParticles(id, x, y, z);
+	initParticles(id);
 }
 
 void drawObj()
@@ -135,7 +138,7 @@ void Sphere::draw(Matrix4 m)
 		//glutWireCube(2.2);
 		drawBoundingBox();
 	}
-	if (intersectCharacter(m))
+	if (isParticleAlive(id) || (intersectCharacter(m) && (toggle_rage || debug)))
 	{
 		//glLoadIdentity();
 		Matrix4 newmatrix = Matrix4();

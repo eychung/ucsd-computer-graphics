@@ -13,7 +13,7 @@ extern int * indices;
 extern bool toggle_shader;
 extern void initParticles(int id, float xsrc, float ysrc, float zsrc);
 extern void updateParticles(int id);
-extern void drawParticles(int id, Matrix4 m);
+extern void drawParticles(int id);
 
 GLfloat light_diffuse[] = {1.0,0.0,0.0,1.0};
 extern GLfloat mat_specular[];
@@ -138,8 +138,20 @@ void Sphere::draw(Matrix4 m)
 	if (intersectCharacter(m))
 	{
 		//glLoadIdentity();
-		//updateParticles();
-		//drawParticles();
+		Matrix4 newmatrix = Matrix4();
+		*(newmatrix.getPointer() + 0) = *(m.getPointer() + 0);
+		*(newmatrix.getPointer() + 1) = *(m.getPointer() + 1);
+		*(newmatrix.getPointer() + 2) = *(m.getPointer() + 2);
+		*(newmatrix.getPointer() + 4) = *(m.getPointer() + 4);
+		*(newmatrix.getPointer() + 5) = *(m.getPointer() + 5);
+		*(newmatrix.getPointer() + 6) = *(m.getPointer() + 6);
+		*(newmatrix.getPointer() + 8) = *(m.getPointer() + 8);
+		*(newmatrix.getPointer() + 9) = *(m.getPointer() + 9);
+		*(newmatrix.getPointer() + 10) = *(m.getPointer() + 10);
+		newmatrix.setMatrix(newmatrix.transpose());
+		glLoadMatrixf(newmatrix.multiply(m).getPointer());
+		updateParticles(id);
+		drawParticles(id);
 	}
 
 }
